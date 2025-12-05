@@ -276,7 +276,7 @@ function startGame() {
 
     // Player Piece: width, height, image source, x, y, type="image"
     myGamePiece = new component(40, 30, playerSvgData, 10, 120, "image"); 
-    myGamePiece.gravity = 0.05;
+    myGamePiece.gravity = 0.15;
     
     myScore = new component("30px", "Press Start 2P", "black", 280, 40, "text"); /* Using pixel font for score */
     myGameArea.start();
@@ -467,7 +467,7 @@ function everyinterval(n) {
 
 function jump() {
     if (gameRunning && myGamePiece) {
-        myGamePiece.gravitySpeed = -2.5;
+        myGamePiece.gravitySpeed = -3.2;
     }
 }
 
@@ -516,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>
 
 </html>
+
 
 
 
