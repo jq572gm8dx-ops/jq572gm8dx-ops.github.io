@@ -27,7 +27,7 @@
         }
 
         body.light-mode {
-            background-color: #f5f5f5;
+            background-color: #696969;
             color: #333;
         }
 
@@ -347,6 +347,94 @@
             text-align: center;
             margin: 1rem 0;
         }
+
+        /* Mobile & Tablet Responsive Design */
+        @media (max-width: 768px) {
+            /* Reduce heading sizes on mobile */
+            h1 {
+                font-size: 2rem !important;
+            }
+            
+            h2 {
+                font-size: 1.5rem !important;
+            }
+
+            /* Adjust game thumbnails for smaller screens */
+            .game-thumbnail {
+                height: 200px;
+            }
+
+            /* Make buttons more touch-friendly */
+            .pixel-btn, .tab-btn, .share-btn {
+                min-height: 44px;
+                padding: 0.75rem 1.25rem;
+            }
+
+            /* Adjust stat boxes */
+            .stat-box {
+                padding: 0.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            /* Reduce modal padding */
+            .modal-content {
+                padding: 1.5rem;
+                width: 95%;
+            }
+
+            /* Stack achievements on mobile */
+            .achievement-badge {
+                margin: 0.25rem;
+            }
+
+            /* Adjust leaderboard table */
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.875rem;
+            }
+
+            /* Make countdown smaller on mobile */
+            .countdown {
+                font-size: 1.5rem;
+            }
+
+            /* Adjust pixel card shadows for mobile */
+            .pixel-card {
+                box-shadow: 
+                    -4px -4px 0 #3b82f6,
+                    4px 4px 0 #a855f7;
+            }
+
+            .pixel-card:hover {
+                box-shadow: 
+                    -6px -6px 0 #3b82f6,
+                    6px 6px 0 #a855f7;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Extra small mobile phones */
+            h1 {
+                font-size: 1.5rem !important;
+            }
+
+            .game-thumbnail {
+                height: 180px;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .difficulty-badge {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen p-4 md:p-8 dark-mode">
@@ -427,7 +515,7 @@
                         <p class="text-sm text-gray-400 mb-4">
                             Tap to fly LeBron through the pipes and rack up championship scores. Don't get dunked on! Features multiple difficulty levels, customizable skins, and an in-game shop.
                         </p>
-                        <p class="text-xs text-gray-500 mb-4">👥 Your Best: <span id="flappyscoreStat">0</span> | 🎮 Played: <span id="flappyplaysStat">0</span>x</p>
+                        <p class="text-xs text-gray-500 mb-0">⏱️ Time Played: <span id="flappyplaysStat">0h 0m</span></p>
                     </a>
 
                     <!-- Game Card 2: PacBron -->
@@ -441,18 +529,16 @@
                         <p class="text-sm text-gray-400 mb-4">
                             Navigate the maze as PacBron, eating pellets and dodging pixelated opponents! Grab power-up rings to turn the tables on enemies and score big.
                         </p>
-                        <p class="text-xs text-gray-500 mb-4">👥 Your Best: <span id="pacscoreStat">0</span> | 🎮 Played: <span id="pacplaysStat">0</span>x</p>
+                        <p class="text-xs text-gray-500 mb-0">⏱️ Time Played: <span id="pacplaysStat">0h 0m</span></p>
                     </a>
 
                     <!-- Game Card 3: Coming Soon -->
                     <div class="pixel-card bg-gray-800 p-6 rounded-xl">
                         <img src="comingsoon.png" alt="Coming Soon" class="game-thumbnail">
                         <div class="countdown" id="countdownTimer"></div>
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">Mystery Game</h3>
-                        <p class="text-sm text-gray-400 mb-4">
-                            More epic games coming to CoolBronGames soon! We're working on new titles to expand the gaming universe. Check back later for announcements.
-                        </p>
-                        <p class="text-xs text-gray-500 mb-4">⏰ Estimated Release: Q1 2026</p>
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">Coming Soon!</h3>
+                    
+     
                         <button onclick="alert('Please check back later for updates!')" class="w-full text-center pixel-btn bg-gray-600 text-white py-3 px-6 rounded-lg text-sm uppercase cursor-not-allowed opacity-50">
                             Coming Soon
                         </button>
@@ -486,10 +572,9 @@
             <div id="tab-comingsoon" class="tab-content">
                 <div class="pixel-card bg-gray-800 p-8 rounded-xl text-center">
                     <h3 class="pixel-font text-2xl text-yellow-400 mb-4">Exciting Games in Development</h3>
-                    <p class="text-gray-300 mb-6">We're crafting more amazing basketball-themed games for 2026. Stay tuned for:</p>
+                
                     <ul class="text-left inline-block text-gray-400 mb-6">
-                        
-                    <p class="text-sm text-gray-500">Follow us for updates and early access!</p>
+   
                 </div>
             </div>
 
@@ -537,19 +622,9 @@
         <!-- Controls Guide Section -->
        
 
-        <!-- Social Share Section -->
-        <section class="mb-16 text-center">
-            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Share Your Scores</h2>
-            <div>
-                <button onclick="shareTwitter()" class="share-btn share-twitter">📱 Share on Twitter</button>
-                <button onclick="shareFacebook()" class="share-btn share-facebook">👍 Share on Facebook</button>
-                <button onclick="copyLink()" class="share-btn share-copy">🔗 Copy Share Link</button>
-            </div>
-        </section>
-
         <!-- Footer Section -->
         <footer class="text-center pt-8 border-t-4 border-double border-yellow-400">
-            <p class="pixel-font text-sm text-gray-400 mb-4">CoolBronGames © 2025 | The Ultimate Basketball Gaming Hub</p>
+       
             <div class="text-xs text-gray-600 space-y-2 mb-4">
                 <p>Built with HTML5 Canvas | Inspired by LeBron James Legacy</p>
                 <p>🎮 <a href="#" class="text-yellow-400 hover:underline">Terms of Service</a> | 
@@ -618,20 +693,32 @@
             try {
                 // FlappyBron stats
                 const flappyData = localStorage.getItem('flappybronGameData');
+                let flappyPlaytime = 0;
                 if (flappyData) {
                     const data = JSON.parse(flappyData);
                     document.getElementById('flappyscoreStat').textContent = data.score || 0;
-                    document.getElementById('flappyplaysStat').textContent = data.gamesPlayed || 0;
                     document.getElementById('flappyleadScore').textContent = data.score || 0;
+                    
+                    // Get playtime in minutes (stored or estimated)
+                    flappyPlaytime = data.playtime || (data.gamesPlayed || 0) * 2;
+                    const flappyHours = Math.floor(flappyPlaytime / 60);
+                    const flappyMins = flappyPlaytime % 60;
+                    document.getElementById('flappyplaysStat').textContent = `${flappyHours}h ${flappyMins}m`;
                 }
 
                 // PacBron stats
                 const pacData = localStorage.getItem('pacbronGameData');
+                let pacPlaytime = 0;
                 if (pacData) {
                     const data = JSON.parse(pacData);
                     document.getElementById('pacscoreStat').textContent = data.score || 0;
-                    document.getElementById('pacplaysStat').textContent = data.gamesPlayed || 0;
                     document.getElementById('pacleadScore').textContent = data.score || 0;
+                    
+                    // Get playtime in minutes (stored or estimated)
+                    pacPlaytime = data.playtime || (data.gamesPlayed || 0) * 2;
+                    const pacHours = Math.floor(pacPlaytime / 60);
+                    const pacMins = pacPlaytime % 60;
+                    document.getElementById('pacplaysStat').textContent = `${pacHours}h ${pacMins}m`;
                 }
 
                 // Overall stats
@@ -645,10 +732,11 @@
                 document.getElementById('bestScore').textContent = totalStats.bestScore;
                 document.getElementById('coinsEarned').textContent = totalStats.coinsEarned;
 
-                // Calculate playtime (rough estimate: 2 min per game average)
-                const playtimeMinutes = totalStats.gamesPlayed * 2;
-                const playtimeHours = Math.floor(playtimeMinutes / 60);
-                document.getElementById('totalPlaytime').textContent = playtimeHours + 'h';
+                // Calculate total playtime
+                const totalMinutes = flappyPlaytime + pacPlaytime;
+                const totalHours = Math.floor(totalMinutes / 60);
+                const remainingMins = totalMinutes % 60;
+                document.getElementById('totalPlaytime').textContent = `${totalHours}h ${remainingMins}m`;
             } catch (e) {
                 console.log('No saved stats found');
             }
