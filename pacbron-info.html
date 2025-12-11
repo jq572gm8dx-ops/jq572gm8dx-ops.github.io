@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PacBron - Game Info</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        /* Custom font for a game-like feel */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background-color: #0a0e27;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .pixel-font {
+            font-family: 'Press Start+2P', cursive;
+        }
+
+        /* Custom Pixel Button Effect */
+        .pixel-btn {
+            position: relative;
+            border: 4px solid #fcfc30;
+            border-radius: 8px;
+            box-shadow: 
+                -4px -4px 0 #fcfc30,
+                4px 4px 0 #1e3a8a;
+            transition: all 0.1s ease-out;
+        }
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 
+                -2px -2px 0 #fcfc30,
+                2px 2px 0 #1e3a8a;
+        }
+        .pixel-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        /* Custom Card Effect */
+        .pixel-card {
+            border: 4px solid #1e3a8a;
+            box-shadow: 
+                -8px -8px 0 #3b82f6,
+                8px 8px 0 #a855f7;
+            transition: transform 0.2s ease;
+        }
+
+        .pixel-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 500;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #fcfc30;
+            background: #1e3a8a;
+            color: #fcfc30;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(252, 252, 48, 0.5);
+        }
+
+        /* Difficulty badge */
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: bold;
+            margin-right: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .difficulty-easy {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .difficulty-medium {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .difficulty-hard {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        /* Controls guide */
+        .controls-guide {
+            background: #1e293b;
+            padding: 1.5rem;
+            border-left: 4px solid #fcfc30;
+            margin: 1rem 0;
+            border-radius: 6px;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .key-badge {
+            background: #1e3a8a;
+            color: #fcfc30;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        /* Feature list */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li:before {
+            content: "🎮";
+            margin-right: 1rem;
+            font-size: 1.5rem;
+        }
+
+        /* Tips section */
+        .tips-box {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 2px solid #fcfc30;
+        }
+
+        .tips-box h3 {
+            color: #fcfc30;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .tips-box ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .tips-box li {
+            padding: 0.5rem 0;
+            color: #e0e7ff;
+            margin-left: 1.5rem;
+        }
+
+        .tips-box li:before {
+            content: "💡";
+            margin-right: 0.5rem;
+        }
+
+        /* Back button */
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: #4b5563;
+            color: #e0e7ff;
+            border: 2px solid #6b7280;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #3b82f6;
+            border-color: #fcfc30;
+        }
+
+        /* Leaderboard table */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .leaderboard-table th {
+            background: #1e3a8a;
+            color: #fcfc30;
+            font-weight: bold;
+        }
+
+        .leaderboard-table tr:hover {
+            background: #2d3748;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8 dark-mode">
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
+
+    <!-- Main Container -->
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Back Button -->
+        <a href="index.html" class="back-btn">← Back to Games</a>
+
+        <!-- Game Header -->
+        <header class="mb-12">
+            <h1 class="pixel-font text-4xl text-yellow-400 mb-4 text-center">PacBron</h1>
+            <div class="text-center mb-6">
+                <span class="difficulty-badge difficulty-medium">Medium</span>
+                <span class="difficulty-badge difficulty-hard">Hard</span>
+            </div>
+            <img src="pacbron.png" alt="PacBron" class="w-full rounded-lg border-4 border-yellow-400">
+        </header>
+
+        <!-- Game Description -->
+        <section class="pixel-card bg-gray-800 p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-4">About the Game</h2>
+            <p class="text-gray-300 text-lg leading-relaxed mb-4">
+                PacBron is a modern take on the classic maze game where you play as PacBron, navigating intricate mazes while collecting pellets and avoiding ghostly opponents. Use strategy and quick reflexes to eat all the pellets, grab power-ups, and defeat your enemies. Each level increases in difficulty as the ghost AI becomes more challenging.
+            </p>
+            <p class="text-gray-300 text-lg leading-relaxed">
+                Navigate through labyrinthine corridors, collect every pellet to complete a level, and use power-up rings strategically to turn the tables on pursuing ghosts. With multiple difficulty levels and increasing complexity, PacBron offers a perfect blend of classic gameplay and modern challenge.
+            </p>
+        </section>
+
+        <!-- Features Section -->
+        <section class="pixel-card bg-gray-800 p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Game Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-yellow-400 font-bold mb-4">Core Features</h3>
+                    <ul class="feature-list text-gray-300">
+                        <li>Multiple difficulty levels</li>
+                        <li>Intelligent ghost AI</li>
+                        <li>Power-up mechanics</li>
+                        <li>Score tracking system</li>
+                        <li>Leaderboard integration</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-yellow-400 font-bold mb-4">Gameplay</h3>
+                    <ul class="feature-list text-gray-300">
+                        <li>Pellet collection goals</li>
+                        <li>Ghost evasion tactics</li>
+                        <li>Power-up rings</li>
+                        <li>Progressive difficulty</li>
+                        <li>High score persistence</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls Section -->
+        <section class="pixel-card bg-gray-800 p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">How to Play</h2>
+            <div class="controls-guide">
+                <div class="control-item">
+                    <span class="text-lg">Move Up</span>
+                    <span class="key-badge">↑ / W</span>
+                </div>
+                <div class="control-item">
+                    <span class="text-lg">Move Down</span>
+                    <span class="key-badge">↓ / S</span>
+                </div>
+                <div class="control-item">
+                    <span class="text-lg">Move Left</span>
+                    <span class="key-badge">← / A</span>
+                </div>
+                <div class="control-item">
+                    <span class="text-lg">Move Right</span>
+                    <span class="key-badge">→ / D</span>
+                </div>
+            </div>
+            <p class="text-gray-400 text-sm mt-4 italic">💡 Works with arrow keys, WASD, and directional input!</p>
+        </section>
+
+        <!-- Tips & Strategies -->
+        <section class="pixel-card bg-gray-800 p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Tips & Strategies</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="tips-box">
+                    <h3>Beginner Tips</h3>
+                    <ul>
+                        <li>Collect all pellets before moving to next level</li>
+                        <li>Avoid staying in tight corners</li>
+                        <li>Use power-ups defensively</li>
+                        <li>Learn the maze layout first</li>
+                    </ul>
+                </div>
+                <div class="tips-box">
+                    <h3>Advanced Strategies</h3>
+                    <ul>
+                        <li>Study ghost movement patterns</li>
+                        <li>Create escape routes while collecting pellets</li>
+                        <li>Time power-ups for maximum efficiency</li>
+                        <li>Master corner techniques for ghost evasion</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Game Mechanics -->
+        <section class="pixel-card bg-gray-800 p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Game Mechanics</h2>
+            <div class="space-y-4">
+                <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-yellow-400">
+                    <h3 class="font-bold text-yellow-400 mb-2">🔵 Pellets</h3>
+                    <p class="text-gray-300">Collect all pellets in the maze to complete the level. Each pellet is worth 10 points.</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-yellow-400">
+                    <h3 class="font-bold text-yellow-400 mb-2">⭐ Power-Ups</h3>
+                    <p class="text-gray-300">Grab power-up rings to temporarily become invincible and chase down ghosts for bonus points!</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-yellow-400">
+                    <h3 class="font-bold text-yellow-400 mb-2">👻 Ghosts</h3>
+                    <p class="text-gray-300">Avoid the intelligent ghosts that hunt you through the maze. Touch them and lose a life!</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-yellow-400">
+                    <h3 class="font-bold text-yellow-400 mb-2">📊 Scoring</h3>
+                    <p class="text-gray-300">Pellets: 10 pts | Level Completion: 500 pts | Ghost Catch: 200 pts | Remaining Time Bonus</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Game Stats -->
+        <section class="pixel-card bg-gray-800 p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Your Progress</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-yellow-400">
+                    <div class="text-3xl font-bold text-yellow-400" id="personalBest">0</div>
+                    <div class="text-sm text-gray-400">Personal Best</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-yellow-400">
+                    <div class="text-3xl font-bold text-yellow-400" id="gamesPlayed">0</div>
+                    <div class="text-sm text-gray-400">Games Played</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-yellow-400">
+                    <div class="text-3xl font-bold text-yellow-400" id="levelsComplete">0</div>
+                    <div class="text-sm text-gray-400">Levels Complete</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-yellow-400">
+                    <div class="text-3xl font-bold text-yellow-400" id="ghostsCaught">0</div>
+                    <div class="text-sm text-gray-400">Ghosts Caught</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Global Leaderboard -->
+        <section class="pixel-card bg-gray-800 p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Global Leaderboard</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="pacleaderboardBody">
+                    <tr>
+                        <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="text-center mb-12">
+            <a href="pacbron.html" class="inline-block pixel-btn bg-red-600 text-white py-4 px-12 rounded-lg text-lg uppercase font-bold">
+                🎮 Play PacBron Now
+            </a>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center pt-8 border-t-4 border-double border-yellow-400 mt-12">
+            <p class="pixel-font text-sm text-gray-400 mb-2">CoolBronGames © 2025</p>
+            <p class="text-xs text-gray-600">
+                Not affiliated with the NBA or LeBron James. Built with HTML5 Canvas.
+            </p>
+        </footer>
+
+    </div>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlBody = document.body;
+
+        function toggleTheme() {
+            if (htmlBody.classList.contains('dark-mode')) {
+                htmlBody.classList.remove('dark-mode');
+                htmlBody.classList.add('light-mode');
+                themeToggle.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlBody.classList.remove('light-mode');
+                htmlBody.classList.add('dark-mode');
+                themeToggle.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            htmlBody.classList.remove('dark-mode');
+            htmlBody.classList.add('light-mode');
+            themeToggle.textContent = '☀️';
+        }
+
+        // Load player stats
+        function loadStats() {
+            try {
+                const gameData = localStorage.getItem('pacbronGameData');
+                if (gameData) {
+                    const data = JSON.parse(gameData);
+                    document.getElementById('personalBest').textContent = data.score || 0;
+                    document.getElementById('gamesPlayed').textContent = data.gamesPlayed || 0;
+                    document.getElementById('levelsComplete').textContent = data.levelsComplete || 0;
+                    document.getElementById('ghostsCaught').textContent = data.ghostsCaught || 0;
+                }
+            } catch (e) {
+                console.log('No saved stats found');
+            }
+        }
+
+        loadStats();
+
+        // Load Global Leaderboard
+        async function loadLeaderboard() {
+            try {
+                const scores = await getTopScores('PacBron', 10);
+                const leaderboardBody = document.getElementById('pacleaderboardBody');
+                
+                if (scores.length > 0) {
+                    leaderboardBody.innerHTML = scores.map((score, index) => `
+                        <tr>
+                            <td>#${index + 1}</td>
+                            <td>${score.playerName}</td>
+                            <td>${score.score.toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    leaderboardBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first to submit!</td></tr>';
+                }
+            } catch (error) {
+                console.log('Firebase not configured yet.');
+                document.getElementById('pacleaderboardBody').innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">Leaderboard unavailable</td></tr>';
+            }
+        }
+
+        loadLeaderboard();
+        setInterval(loadLeaderboard, 10000); // Update every 10 seconds
+    </script>
+</body>
+</html>

@@ -6,6 +6,10 @@
     <title>CoolBronGames</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         /* Custom font for a game-like feel */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&display=swap');
@@ -14,6 +18,16 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0d1117; /* Dark background for a retro feel */
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background-color: #0a0e27;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+            color: #333;
         }
 
         .pixel-font {
@@ -47,13 +61,22 @@
             box-shadow: 
                 -8px -8px 0 #3b82f6, /* Blue inner shadow */
                 8px 8px 0 #a855f7; /* Purple outer shadow */
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .pixel-card:hover {
-            transform: scale(1.02);
+            transform: translateY(-8px) scale(1.02);
             box-shadow: 
-                -12px -12px 0 #3b82f6,
-                12px 12px 0 #a855f7;
+                -12px -12px 0 #3b82f6, /* Blue inner shadow */
+                12px 12px 0 #a855f7; /* Purple outer shadow */
+        }
+
+        /* Game card link styles */
+        .game-card-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            height: 100%;
         }
 
         /* SVG styles for the LeBron Pixel Head */
@@ -63,83 +86,720 @@
             margin: 0 auto;
             display: block;
         }
+
+        /* Uniform game thumbnail sizing */
+        .game-thumbnail {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        /* Game preview modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 4px solid #1e3a8a;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        /* Stats display */
+        .stat-box {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #fcfc30;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fcfc30;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #e0e7ff;
+            margin-top: 0.5rem;
+        }
+
+        /* Achievement badges */
+        .achievement-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #a855f7 0%, #d946ef 100%);
+            border-radius: 8px;
+            border: 2px solid #fcfc30;
+            margin: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-size: 1.5rem;
+        }
+
+        .achievement-badge:hover {
+            transform: scale(1.1);
+        }
+
+        /* Difficulty badge */
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .difficulty-easy {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .difficulty-medium {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .difficulty-hard {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        /* Leaderboard table */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .leaderboard-table th {
+            background: #1e3a8a;
+            color: #fcfc30;
+            font-weight: bold;
+        }
+
+        .leaderboard-table tr:hover {
+            background: #2d3748;
+        }
+
+        /* Social share buttons */
+        .share-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .share-btn:hover {
+            opacity: 0.8;
+        }
+
+        .share-twitter {
+            background: #1da1f2;
+            color: white;
+        }
+
+        .share-facebook {
+            background: #4267b2;
+            color: white;
+        }
+
+        .share-copy {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 500;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #fcfc30;
+            background: #1e3a8a;
+            color: #fcfc30;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(252, 252, 48, 0.5);
+        }
+
+        /* Tab navigation */
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: #2d3748;
+            border: 2px solid #4b5563;
+            color: #cbd5e1;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #3b82f6;
+            border-color: #fcfc30;
+            color: #fcfc30;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Controls guide */
+        .controls-guide {
+            background: #1e293b;
+            padding: 1.5rem;
+            border-left: 4px solid #fcfc30;
+            margin: 1rem 0;
+            border-radius: 6px;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .key-badge {
+            background: #1e3a8a;
+            color: #fcfc30;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        /* Countdown timer */
+        .countdown {
+            font-size: 2rem;
+            color: #fcfc30;
+            font-weight: bold;
+            text-align: center;
+            margin: 1rem 0;
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8">
+<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8 dark-mode">
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
 
     <!-- Main Container -->
     <div class="max-w-6xl mx-auto">
 
         <!-- Header/Title Section -->
-        <header class="text-center mb-16 p-6 bg-yellow-400/90 rounded-xl pixel-card border-yellow-500">
-            <img src="coolbrongames.png" alt="">
-           
-          
+        <header class="text-center mb-16 p-0">
+            <img src="coolbrongames.png" alt="CoolBronGames" class="w-full h-auto">
         </header>
 
-        <!-- Game Listing Section -->
-        <section>
-
-            <!-- Game List Grid (Responsive) -->
-            <div id="game-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                
-                <!-- Game Card 1: FlappyBron (Linked to flappybron.html) -->
-                <div class="pixel-card bg-gray-800 p-6 rounded-xl hover:bg-gray-700/70 cursor-pointer">
-                    <!-- Placeholder Game Image URL (updated text) -->
-                    <img src="Untitled design.png" alt="">
-
-
-                    <h3 class="pixel-font text-xl text-yellow-400 mb-2">FlappyBron</h3>
-                    <p class="text-sm text-gray-400 mb-4">
-                        Tap to fly LeBron through the pipes and rack up championship scores. Don't get dunked on!
-                    </p>
-                    <a href="flappybron.html" class="block text-center pixel-btn bg-red-600 text-white py-3 px-6 rounded-lg text-sm uppercase">
-                        Play FlappyBron
-                    </a>
+        <!-- About Section -->
+       
+<!--
+    
+        <section class="mb-16">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6 text-center">Your Stats</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalGamesPlayed">0</div>
+                    <div class="stat-label">Games Played</div>
                 </div>
-
-                <!-- Game Card 2: PacBron (Linked to pacbron.html) -->
-                <div class="pixel-card bg-gray-800 p-6 rounded-xl hover:bg-gray-700/70 cursor-pointer">
-                    <!-- Placeholder Game Image URL (updated text) -->
-                    <img src="pacbron.png" alt="">
-                         
-                    <h3 class="pixel-font text-xl text-yellow-400 mb-2">PacBron</h3>
-                    <p class="text-sm text-gray-400 mb-4">
-                        Navigate the maze as PacBron, eating pellets and dodging pixelated opponents! Grab the power-up rings!
-                    </p>
-                    <a href="pacbron.html" class="block text-center pixel-btn bg-red-600 text-white py-3 px-6 rounded-lg text-sm uppercase">
-                        Play Pac-Bron
-                    </a>
+                <div class="stat-box">
+                    <div class="stat-value" id="bestScore">0</div>
+                    <div class="stat-label">Best Score</div>
                 </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="totalPlaytime">0h</div>
+                    <div class="stat-label">Total Playtime</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="coinsEarned">0</div>
+                    <div class="stat-label">Coins Earned</div>
+                </div>
+            </div>
+        </section> 
 
-                <!-- Game Card 3: Four Rings Puzzle (Original) -->
-                <div class="pixel-card bg-gray-800 p-6 rounded-xl hover:bg-gray-700/70 cursor-pointer">
-                    <!-- Placeholder Game Image URL -->
-                    <img src="comingsoon.png" alt="">
 
+        <section class="mb-16">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6 text-center">Achievements Unlocked</h2>
+            <div class="text-center" id="achievementsContainer">
+                <div class="achievement-badge" title="First Flight - Play FlappyBron">🏀</div>
+                <div class="achievement-badge" title="High Flyer - Score 50+ in FlappyBron">✈️</div>
+                <div class="achievement-badge" title="Maze Master - Play PacBron">🎮</div>
+                <div class="achievement-badge" title="Collector - Unlock 5 cosmetics">🎁</div>
+                <div class="achievement-badge" title="Champion - Reach top of leaderboard">👑</div>
+            </div>
+            <p class="text-center text-gray-400 text-sm mt-4">Play games to unlock more achievements!</p>
+        </section>
 
-                    <h3 class="pixel-font text-xl text-yellow-400 mb-2">COMING SOON</h3>
-                    <p class="text-sm text-gray-400 mb-4">
+        <section class="mb-16">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6 text-center">Games</h2>
+            
+            <div class="flex justify-center mb-6 flex-wrap">
+                <button class="tab-btn active" onclick="switchTab('all')">All Games</button>
+                <button class="tab-btn" onclick="switchTab('active')">Currently Playing</button>
+                <button class="tab-btn" onclick="switchTab('comingsoon')">Coming Soon</button>
+                <button class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
+            </div>
+
+            <!-- All Games Tab -->
+            <div id="tab-all" class="tab-content active">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Game Card 1: FlappyBron -->
+                    <a href="flappybron-info.html" class="pixel-card bg-gray-800 p-6 rounded-xl cursor-pointer game-card-link">
+                        <img src="Untitled design.png" alt="FlappyBron" class="game-thumbnail">
+                        <div class="mb-3">
+                            <span class="difficulty-badge difficulty-easy">Easy</span>
+                            <span class="difficulty-badge difficulty-medium">Medium</span>
+                            <span class="difficulty-badge difficulty-hard">Impossible</span>
+                        </div>
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">FlappyBron</h3>
+                        <p class="text-sm text-gray-400 mb-4">
+                            Tap to fly LeBron through the pipes and rack up championship scores. Don't get dunked on! Features multiple difficulty levels, customizable skins, and an in-game shop.
+                        </p>
+                        <p class="text-xs text-gray-500 mb-4">👥 Your Best: <span id="flappyscoreStat">0</span> | 🎮 Played: <span id="flappyplaysStat">0</span>x</p>
+                    </a>
+
+                    <!-- Game Card 2: PacBron -->
+                    <a href="pacbron-info.html" class="pixel-card bg-gray-800 p-6 rounded-xl cursor-pointer game-card-link">
+                        <img src="pacbron.png" alt="PacBron" class="game-thumbnail">
+                        <div class="mb-3">
+                            <span class="difficulty-badge difficulty-medium">Medium</span>
+                            <span class="difficulty-badge difficulty-hard">Hard</span>
+                        </div>
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">PacBron</h3>
+                        <p class="text-sm text-gray-400 mb-4">
+                            Navigate the maze as PacBron, eating pellets and dodging pixelated opponents! Grab power-up rings to turn the tables on enemies and score big.
+                        </p>
+                        <p class="text-xs text-gray-500 mb-4">👥 Your Best: <span id="pacscoreStat">0</span> | 🎮 Played: <span id="pacplaysStat">0</span>x</p>
+                    </a>
+
+                    <!-- Game Card 3: Coming Soon -->
+                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
+                        <img src="comingsoon.png" alt="Coming Soon" class="game-thumbnail">
+                        <div class="countdown" id="countdownTimer"></div>
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">Mystery Game</h3>
+                        <p class="text-sm text-gray-400 mb-4">
+                            More epic games coming to CoolBronGames soon! We're working on new titles to expand the gaming universe. Check back later for announcements.
+                        </p>
+                        <p class="text-xs text-gray-500 mb-4">⏰ Estimated Release: Q1 2026</p>
+                        <button onclick="alert('Please check back later for updates!')" class="w-full text-center pixel-btn bg-gray-600 text-white py-3 px-6 rounded-lg text-sm uppercase cursor-not-allowed opacity-50">
+                            Coming Soon
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Games Tab -->
+            <div id="tab-active" class="tab-content">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
+                        <img src="Untitled design.png" alt="FlappyBron" class="game-thumbnail">
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">FlappyBron</h3>
+                        <div class="stat-box mt-4">
+                            <div class="stat-value">Unlocked</div>
+                            <div class="stat-label">Full Access</div>
+                        </div>
+                    </div>
+                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
+                        <img src="pacbron.png" alt="PacBron" class="game-thumbnail">
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">PacBron</h3>
+                        <div class="stat-box mt-4">
+                            <div class="stat-value">Unlocked</div>
+                            <div class="stat-label">Full Access</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coming Soon Tab -->
+            <div id="tab-comingsoon" class="tab-content">
+                <div class="pixel-card bg-gray-800 p-8 rounded-xl text-center">
+                    <h3 class="pixel-font text-2xl text-yellow-400 mb-4">Exciting Games in Development</h3>
+                    <p class="text-gray-300 mb-6">We're crafting more amazing basketball-themed games for 2026. Stay tuned for:</p>
+                    <ul class="text-left inline-block text-gray-400 mb-6">
                         
-                    </p>
-                    <a href="#game3"  class="block text-center pixel-btn bg-red-600 text-white py-3 px-6 rounded-lg text-sm uppercase">
-                        
-                    </a>
+                    <p class="text-sm text-gray-500">Follow us for updates and early access!</p>
                 </div>
-                
-                <!-- Template Card is still available but commented out for future use -->
+            </div>
 
+            <!-- Leaderboard Tab -->
+            <div id="tab-leaderboard" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-4">FlappyBron - Global Leaderboard</h3>
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="flappyleaderboardBody">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-4">PacBron - Global Leaderboard</h3>
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pacleaderboardBody">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls Guide Section -->
+       
+
+        <!-- Social Share Section -->
+        <section class="mb-16 text-center">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Share Your Scores</h2>
+            <div>
+                <button onclick="shareTwitter()" class="share-btn share-twitter">📱 Share on Twitter</button>
+                <button onclick="shareFacebook()" class="share-btn share-facebook">👍 Share on Facebook</button>
+                <button onclick="copyLink()" class="share-btn share-copy">🔗 Copy Share Link</button>
             </div>
         </section>
 
         <!-- Footer Section -->
-        <footer class="text-center mt-16 pt-8 border-t-4 border-double border-yellow-400">
-            <p class="text-sm text-gray-500">
-                &copy; 2025 CoolBronGames | All Rights Reserved. Not affiliated with the NBA, or any other entity.
+        <footer class="text-center pt-8 border-t-4 border-double border-yellow-400">
+            <p class="pixel-font text-sm text-gray-400 mb-4">CoolBronGames © 2025 | The Ultimate Basketball Gaming Hub</p>
+            <div class="text-xs text-gray-600 space-y-2 mb-4">
+                <p>Built with HTML5 Canvas | Inspired by LeBron James Legacy</p>
+                <p>🎮 <a href="#" class="text-yellow-400 hover:underline">Terms of Service</a> | 
+                   <a href="#" class="text-yellow-400 hover:underline">Privacy Policy</a> | 
+                   <a href="#" class="text-yellow-400 hover:underline">Contact Us</a></p>
+            </div>
+            <p class="text-xs text-gray-600">
+                Not affiliated with the NBA, LeBron James, or any other entity. All assets are original creations for entertainment purposes.
             </p>
-           
         </footer>
 
     </div>
-</body>
-</html>
+
+    <!-- Game Preview Modal -->
+    <div id="gamePreviewModal" class="modal" onclick="closeGamePreview(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeGamePreview()">✕</button>
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-4" id="previewTitle">Game Details</h2>
+            <div id="previewContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlBody = document.body;
+
+        function toggleTheme() {
+            if (htmlBody.classList.contains('dark-mode')) {
+                htmlBody.classList.remove('dark-mode');
+                htmlBody.classList.add('light-mode');
+                themeToggle.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlBody.classList.remove('light-mode');
+                htmlBody.classList.add('dark-mode');
+                themeToggle.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            htmlBody.classList.remove('dark-mode');
+            htmlBody.classList.add('light-mode');
+            themeToggle.textContent = '☀️';
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Load Stats from localStorage
+        function loadStats() {
+            try {
+                // FlappyBron stats
+                const flappyData = localStorage.getItem('flappybronGameData');
+                if (flappyData) {
+                    const data = JSON.parse(flappyData);
+                    document.getElementById('flappyscoreStat').textContent = data.score || 0;
+                    document.getElementById('flappyplaysStat').textContent = data.gamesPlayed || 0;
+                    document.getElementById('flappyleadScore').textContent = data.score || 0;
+                }
+
+                // PacBron stats
+                const pacData = localStorage.getItem('pacbronGameData');
+                if (pacData) {
+                    const data = JSON.parse(pacData);
+                    document.getElementById('pacscoreStat').textContent = data.score || 0;
+                    document.getElementById('pacplaysStat').textContent = data.gamesPlayed || 0;
+                    document.getElementById('pacleadScore').textContent = data.score || 0;
+                }
+
+                // Overall stats
+                const totalStats = {
+                    gamesPlayed: (flappyData ? JSON.parse(flappyData).gamesPlayed || 0 : 0) + (pacData ? JSON.parse(pacData).gamesPlayed || 0 : 0),
+                    bestScore: Math.max(flappyData ? JSON.parse(flappyData).score || 0 : 0, pacData ? JSON.parse(pacData).score || 0 : 0),
+                    coinsEarned: (flappyData ? JSON.parse(flappyData).coins || 0 : 0) + (pacData ? JSON.parse(pacData).coins || 0 : 0)
+                };
+
+                document.getElementById('totalGamesPlayed').textContent = totalStats.gamesPlayed;
+                document.getElementById('bestScore').textContent = totalStats.bestScore;
+                document.getElementById('coinsEarned').textContent = totalStats.coinsEarned;
+
+                // Calculate playtime (rough estimate: 2 min per game average)
+                const playtimeMinutes = totalStats.gamesPlayed * 2;
+                const playtimeHours = Math.floor(playtimeMinutes / 60);
+                document.getElementById('totalPlaytime').textContent = playtimeHours + 'h';
+            } catch (e) {
+                console.log('No saved stats found');
+            }
+        }
+
+        loadStats();
+
+        // Game Preview Modal
+        function openGamePreview(game) {
+            const modal = document.getElementById('gamePreviewModal');
+            const title = document.getElementById('previewTitle');
+            const content = document.getElementById('previewContent');
+
+            if (game === 'flappybron') {
+                title.textContent = 'FlappyBron - Game Details';
+                content.innerHTML = `
+                    <p class="text-gray-300 mb-4">Tap to fly LeBron through the pipes and rack up championship scores!</p>
+                    <h3 class="text-yellow-400 font-bold mb-2">Features:</h3>
+                    <ul class="text-gray-400 mb-4 list-disc list-inside">
+                        <li>Three difficulty levels (Easy, Medium, Impossible)</li>
+                        <li>7+ unique LeBron skins to unlock</li>
+                        <li>In-game shop with cosmetics</li>
+                        <li>Multiple obstacle types</li>
+                        <li>Fullscreen gameplay</li>
+                        <li>Smooth jump animation</li>
+                    </ul>
+                    <h3 class="text-yellow-400 font-bold mb-2">Tips:</h3>
+                    <ul class="text-gray-400 list-disc list-inside">
+                        <li>Time your jumps carefully</li>
+                        <li>Collect coins for rewards</li>
+                        <li>Unlock harder difficulties for more challenge</li>
+                        <li>Customize your appearance in the shop</li>
+                    </ul>
+                    <button onclick="closeGamePreview(); window.location.href='flappybron.html'" class="mt-6 w-full pixel-btn bg-red-600 text-white py-3 rounded-lg font-bold">
+                        Play Now
+                    </button>
+                `;
+            } else if (game === 'pacbron') {
+                title.textContent = 'PacBron - Game Details';
+                content.innerHTML = `
+                    <p class="text-gray-300 mb-4">Navigate mazes as PacBron, eating pellets and dodging ghostly opponents!</p>
+                    <h3 class="text-yellow-400 font-bold mb-2">Features:</h3>
+                    <ul class="text-gray-400 mb-4 list-disc list-inside">
+                        <li>Classic maze gameplay with a twist</li>
+                        <li>Multiple difficulty levels</li>
+                        <li>Power-up mechanics</li>
+                        <li>Increasing ghost AI difficulty</li>
+                        <li>Highscore tracking</li>
+                        <li>Responsive controls</li>
+                    </ul>
+                    <h3 class="text-yellow-400 font-bold mb-2">Tips:</h3>
+                    <ul class="text-gray-400 list-disc list-inside">
+                        <li>Use power-ups wisely</li>
+                        <li>Plan your route to avoid ghosts</li>
+                        <li>Collect all pellets for bonus points</li>
+                        <li>Learn ghost patterns for better strategy</li>
+                    </ul>
+                    <button onclick="closeGamePreview(); window.location.href='pacbron.html'" class="mt-6 w-full pixel-btn bg-red-600 text-white py-3 rounded-lg font-bold">
+                        Play Now
+                    </button>
+                `;
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeGamePreview(event) {
+            if (event && event.target.id !== 'gamePreviewModal') return;
+            document.getElementById('gamePreviewModal').classList.remove('active');
+        }
+
+        // Social Sharing
+        function shareTwitter() {
+            const text = `I'm playing CoolBronGames! Just scored ${document.getElementById('flappyscoreStat').textContent} points in FlappyBron! Can you beat my score? 🏀`;
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${window.location.href}`;
+            window.open(url, '_blank');
+        }
+
+        function shareFacebook() {
+            const url = `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`;
+            window.open(url, '_blank');
+        }
+
+        function copyLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard! Share it with friends.');
+            });
+        }
+
+        // Countdown Timer for Coming Soon game
+        function updateCountdown() {
+            const releaseDate = new Date('2026-03-31').getTime();
+            const now = new Date().getTime();
+            const distance = releaseDate - now;
+
+            if (distance > 0) {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+                const timerElement = document.getElementById('countdownTimer');
+                if (timerElement) {
+                    timerElement.textContent = `${days}d ${hours}h ${minutes}m`;
+                }
+            }
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 60000); // Update every minute
+
+        // Refresh stats periodically
+        setInterval(loadStats, 5000); // Update every 5 seconds when user is on page
+
+        // Firebase Leaderboard Functions
+        async function loadLeaderboards() {
+            try {
+                // Load FlappyBron leaderboard
+                const flappyScores = await getTopScores('FlappyBron', 10);
+                const flappyBody = document.getElementById('flappyleaderboardBody');
+                if (flappyScores.length > 0) {
+                    flappyBody.innerHTML = flappyScores.map((score, index) => `
+                        <tr>
+                            <td>#${index + 1}</td>
+                            <td>${score.playerName}</td>
+                            <td>${score.score.toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    flappyBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first!</td></tr>';
+                }
+
+                // Load PacBron leaderboard
+                const pacScores = await getTopScores('PacBron', 10);
+                const pacBody = document.getElementById('pacleaderboardBody');
+                if (pacScores.length > 0) {
+                    pacBody.innerHTML = pacScores.map((score, index) => `
+                        <tr>
+                            <td>#${index + 1}</td>
+                            <td>${score.playerName}</td>
+                            <td>${score.score.toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    pacBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first!</td></tr>';
+                }
+            } catch (error) {
+                console.log('Firebase not configured yet. Using local stats only.');
+            }
+        }
+
+        // Load leaderboards when page loads and every 10 seconds for real-time updates
+        loadLeaderboards();
+        setInterval(loadLeaderboards, 10000);
+    </script>

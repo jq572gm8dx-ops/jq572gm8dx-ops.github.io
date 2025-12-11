@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pac-Bron: King of the Court</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         :root {
             --bg-color: #121212;
@@ -591,6 +595,8 @@
                         overlay.querySelector('h1').innerText = "FOUL OUT!";
                         overlay.querySelector('p').innerText = "FINAL SCORE: " + score;
                         startBtn.innerText = "REMATCH";
+                        // Submit score to leaderboard
+                        submitScoreToLeaderboard('PacBron', score, 'normal');
                     }
                 }
             }
@@ -605,6 +611,8 @@
                 overlay.style.display = 'flex';
                 overlay.querySelector('h1').innerText = "CHAMPION!";
                 overlay.querySelector('p').innerText = "COURT CLEARED";
+                // Submit score to leaderboard
+                submitScoreToLeaderboard('PacBron', score, 'normal');
             }
         }
 
