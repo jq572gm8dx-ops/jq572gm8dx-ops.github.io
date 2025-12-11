@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html style="overflow-y: scroll;">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Flappy Bron Pixel Edition</title>
@@ -34,7 +34,7 @@ body {
 canvas {
     border: 4px solid #555; /* Thicker, pixelated border */
     /* Pixelated sky background using gradient and repeating pattern */
-    background-image:url(Gemini_Generated_Image_x51mbwx51mbwx51m.png);
+
     background-size:cover; /* Small repeating units for pixel effect */
     background-repeat: no-repeat;
     image-rendering: optimizeSpeed; 
@@ -44,16 +44,13 @@ canvas {
     image-rendering: crisp-edges; /* Pixel-perfect rendering */
     image-rendering: pixelated; /* Chrome, Edge, Opera */
     display: block;
-    margin: 20px auto;
+    margin: 0;
     box-sizing: border-box;
     width: 100vw;
+    height: 100vh;
     max-width: 100vw;
-    height: auto;
-    max-height: calc(100vh - 40px); /* keeps canvas inside viewport to avoid vertical scroll */
-    margin: 20px auto;
+    max-height: 100vh;
     overflow: hidden;
-    max-width: 480px; /* default game canvas width */
-    height: auto;
     cursor: pointer; /* indicates clickable for fullscreen toggle */
     touch-action: manipulation;
     transition: width .12s ease, height .12s ease, transform .12s ease;
@@ -61,38 +58,31 @@ canvas {
     --fs-width: 100vw;
     --fs-height: 100vh;
     box-shadow: 8px 8px 0px 0px #1a1a1a; /* Retro shadow effect */
-    max-width: 120vw;
-    height: auto;
     border-radius: 0; /* No rounded corners for pixel art */
 }
 
 /* Menu Styling - Pixelated retro theme */
 #menu {
-     margin: 0;
-
-
-  background-image: url("Untitled\ design.png");
-  background-repeat: no-repeat;
-  background-position: center;
-background-size: cover;
-background-position: center center;
-background-repeat: no-repeat;
-box-sizing: border-box;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-position: fixed;
-inset: 0;
-width: 100vw;
-height: 100vh;
-margin: 0;
- /* Darker menu background */
-    padding: 30px 40px;
-    border-radius: 0; /* No rounded corners */
-    box-shadow: 8px 8px 0px 0px #1a1a1a; /* Retro shadow */
-    border: 4px solid #555; /* Pixelated border */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: url("Untitled design.png");
+    background-size: cover;
+    background-position: center center;
+    box-sizing: border-box;
+    gap: 0;
+    border-radius: 0;
+    box-shadow: 8px 8px 0px 0px #1a1a1a;
+    border: 4px solid #555;
     text-transform: uppercase;
+    z-index: 100;
 }
 
 #menu h1 {
@@ -104,13 +94,21 @@ margin: 0;
 }
 
 #highText {
-
-    font-size: 1.4rem;
+    font-size: 2rem;
     color: #FFD700;
-    margin-top: 70px; /* Gold for high score */
-    margin-bottom: 40px;
-    font-weight: normal;
-    text-shadow: 2px 2px #000;
+    margin-top: 50px;
+    margin-bottom: 32px;
+    font-weight: bold;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 #000, 0 0 8px #FFD70099;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
 }
 
 /* Button Styling - Pixelated start button with LeBron bird */
@@ -128,7 +126,7 @@ button {
     line-height: 1;
     position: relative;
     outline: none; 
-    padding-top:360px;/* Remove default focus outline */
+    padding-top:500px;/* Remove default focus outline */
 }
 
 /* Pixel border effect for button */
@@ -152,6 +150,7 @@ button:active::before {
 
 /* Style the SVG/Icon inside the button */
 #startBtn svg {
+
     width: 100px; /* Make the bird larger in the button */
     height: 100px;
     fill: none; /* SVG content will define its own colors */
@@ -209,16 +208,452 @@ button:active::before {
     transform: translate(4px, 4px);
 }
 
+/* Difficulty Selector Styling */
+#difficultySelector {
+    margin-bottom: 20px;
+    padding-top: 500px;
+}
+
+#difficultySelector label {
+    font-size: 0.8rem;
+    color: #FFD700;
+    margin-right: 10px;
+    text-shadow: 2px 2px #000;
+}
+
+#difficultySelect {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #eee;
+    background: #444;
+    border: 3px solid #666;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0px 0px #1a1a1a;
+    outline: none;
+    image-rendering: pixelated;
+    padding-top: 10px;
+}
+
+#difficultySelect:hover {
+    background: #555;
+    border-color: #888;
+}
+
+#difficultySelect:focus {
+    border-color: #FFD700;
+}
+
+/* Pause Menu Styling */
+#pauseMenu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(34, 34, 34, 0.95);
+    padding: 40px;
+    border-radius: 0;
+    box-shadow: 8px 8px 0px 0px #1a1a1a;
+    text-align: center;
+    z-index: 2000;
+    border: 4px solid #FFD700;
+    display: none;
+    text-transform: uppercase;
+}
+
+#pauseMenu h2 {
+    color: #FFD700;
+    font-size: 2rem;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px #000;
+}
+
+#pauseMenu button {
+    margin: 10px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #eee;
+    background: #444;
+    border: 3px solid #666;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0px 0px #1a1a1a;
+}
+
+#pauseMenu button:hover {
+    background: #555;
+}
+
+#pauseMenu button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px #1a1a1a;
+}
+
+/* Pause Button */
+#pauseBtn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    padding: 6px 10px;
+    font-size: 1rem;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #FFD700;
+    background: rgba(68, 68, 68, 0.8);
+    border: 2px solid #666;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0px 0px #1a1a1a;
+    z-index: 500;
+    display: none;
+    line-height: 1;
+    height: 40px;
+    width: 40px;
+}
+
+#pauseBtn:hover {
+    background: rgba(85, 85, 85, 0.9);
+}
+
+#pauseBtn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px 0px #1a1a1a;
+}
+
+/* Mobile/Tablet optimizations */
+@media (max-width: 768px) {
+    canvas {
+        max-width: 100vw;
+        width: 100vw !important;
+        height: auto !important;
+    }
+    
+    #pauseBtn {
+        top: 10px;
+        right: 10px;
+        padding: 8px 16px;
+        font-size: 1rem;
+       
+    }
+    
+    #pauseMenu {
+        padding: 30px 20px;
+        width: 80%;
+        max-width: 400px;
+    }
+    
+    #pauseMenu h2 {
+        font-size: 1.5rem;
+    }
+    
+    #pauseMenu button {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        margin: 8px;
+    }
+    
+    #difficultySelector {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    #difficultySelector label {
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    #highText {
+        font-size: 1.5rem;
+    }
+    
+    #startBtn img {
+        width: 120px !important;
+    }
+    
+    .message-box {
+        padding: 20px;
+        width: 85%;
+    }
+    
+    .message-box h3 {
+        font-size: 1.5rem;
+    }
+    
+    .message-box p {
+        font-size: 0.9rem;
+    }
+}
+
+/* Ball Counter Styling */
+#coinCounter {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    padding: 8px 15px;
+    font-size: 1rem;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #FF6B35;
+    background: rgba(68, 68, 68, 0.8);
+    border: 2px solid #FF6B35;
+    box-shadow: 3px 3px 0px 0px #1a1a1a;
+    z-index: 500;
+    display: none;
+    line-height: 1;
+    text-shadow: 2px 2px #000;
+}
+
+/* Shop Button Styling */
+#shopBtn {
+    margin-top: 500px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #FF6B35;
+    background: #444;
+    border: 3px solid #FF6B35;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0px 0px #1a1a1a;
+    text-shadow: 2px 2px #000;
+    width: 100px;
+    height: 50px;
+
+}
+
+#shopBtn:hover {
+    background: #555;
+}
+
+#shopBtn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px #1a1a1a;
+}
+
+/* Shop Menu Styling */
+#shopMenu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 90vh;
+    max-width: 1200px;
+    max-height: 90vh;
+    background-color: rgba(20, 20, 20, 0.98);
+    padding: 28px;
+    border-radius: 8px;
+    box-shadow: 12px 12px 0px 0px #1a1a1a;
+    text-align: left;
+    z-index: 2000;
+    border: 4px solid #FF6B35;
+    display: none;
+    text-transform: uppercase;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 16px;
+    box-sizing: border-box;
+    padding-bottom: 32px;
+}
+
+.shop-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+}
+
+#shopMenu h2 {
+    color: #FF6B35;
+    font-size: 2.2rem;
+    margin: 0;
+    text-shadow: 2px 2px #000;
+}
+
+#shopMenu .coin-display {
+    font-size: 1.2rem;
+    color: #FF6B35;
+    margin: 0;
+    text-shadow: 2px 2px #000;
+    justify-self: center;
+}
+
+.shop-section {
+    margin: 0;
+}
+
+.shop-section h3 {
+    color: #00FF00;
+    font-size: 1.2rem;
+    margin: 0 0 10px 0;
+    text-shadow: 2px 2px #000;
+}
+
+.shop-sections-container {
+    overflow-y: auto;
+    padding-right: 6px;
+    min-height: 0;
+    max-height: 100%;
+    padding-bottom: 12px;
+}
+
+#playerSkins, #pipeColors, #backgrounds {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+@media (max-width: 900px) {
+    #playerSkins, #pipeColors, #backgrounds {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    #playerSkins, #pipeColors, #backgrounds {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+}
+
+.shop-item {
+    background: #2a2a2a;
+    border: 2px solid #666;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 90px;
+    box-sizing: border-box;
+}
+
+.shop-item-info {
+    text-align: left;
+}
+
+.shop-item-name {
+    color: #eee;
+    font-size: 1rem;
+    margin-bottom: 6px;
+}
+
+.shop-item-price {
+    color: #FF6B35;
+    font-size: 0.9rem;
+}
+
+.shop-item button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #eee;
+    background: #444;
+    border: 2px solid #666;
+    cursor: pointer;
+    box-shadow: 3px 3px 0px 0px #1a1a1a;
+}
+
+.shop-item button.buy-state {
+    background: #444;
+    border-color: #777;
+    color: #fff;
+}
+
+.shop-item button.buy-state:hover {
+    background: #555;
+}
+
+.shop-item button.owned-state {
+    background: #2a4d2a;
+    border-color: #4caf50;
+    color: #f4fff4;
+}
+
+.shop-item button.owned-state:hover {
+    background: #356c35;
+}
+
+.shop-item button.equipped-state {
+    background: #1c6ba0;
+    border-color: #64b5f6;
+    color: #f0f8ff;
+}
+
+.shop-item button.equipped-state:hover {
+    background: #2685c4;
+}
+
+.shop-item button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.shop-item.owned {
+    opacity: 0.6;
+    border-color: #666;
+}
+
+#shopCloseBtn {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 1rem;
+    line-height: 1;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #eee;
+    background: #444;
+    border: 3px solid #666;
+    cursor: pointer;
+    box-shadow: 3px 3px 0px 0px #1a1a1a;
+    height: 50px;
+    width: 50px;
+}
+
+#shopCloseBtn:hover {
+    background: #555;
+}
+
 </style>
 </head>
+
 <body>
 
-<div id="menu">
- 
-    <h2 id="highText">High Score: <b>0</b></h2>
-    <button id="startBtn">
-       <img style="width:100px;height: auto;" src="start.jpg" alt="">
-    </button>
+<button id="pauseBtn">||</button>
+
+<div id="coinCounter">🏀 <span id="coinCount">0</span></div>
+
+<div id="pauseMenu">
+    <h2>PAUSED</h2>
+    <button id="resumeBtn">RESUME</button>
+    <button id="quitBtn">QUIT TO MENU</button>
+</div>
+
+<div id="shopMenu">
+    <div class="shop-header">
+        <h2>🏀 SHOP 🏀</h2>
+        <div class="coin-display">YOUR BALLS: <span id="shopCoinCount">0</span></div>
+        <button id="shopCloseBtn">X</button>
+    </div>
+    <div class="shop-sections-container">
+        <div class="shop-section">
+            <h3>PLAYER SKINS</h3>
+            <div id="playerSkins"></div>
+        </div>
+        
+        <div class="shop-section">
+            <h3>PIPE COLORS</h3>
+            <div id="pipeColors"></div>
+        </div>
+        
+        <div class="shop-section">
+            <h3>BACKGROUNDS</h3>
+            <div id="backgrounds"></div>
+        </div>
+    </div>
 </div>
 
 <div id="messageBox" class="message-box">
@@ -227,13 +662,723 @@ button:active::before {
     <button id="messageCloseBtn">OK</button>
 </div>
 
+<!-- Move menu to the end of body so canvas insertBefore does not affect its layout -->
+
+<div id="menu">
+     <div style="margin-top: 70px; font-size: 0.8rem; color: #FF6B35;">
+        TOTAL BALLS: <span id="menuCoinCount">0</span>
+    </div>
+    
+    <h2 id="highText" style="margin:0;">HIGH SCORE: <b>0</b></h2>
+
+    <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 30px;">
+        <button id="shopBtn">🏀 SHOP</button>
+        
+        <button id="startBtn" style="margin: 0; border:none; background:none; box-shadow:none; display:flex; align-items:center; justify-content:center;">
+            <img style="width:150px;height:auto; border-radius:0; border:none; background:none; box-shadow:none; display:block;" src="start.jpg" alt="Start">
+        </button>
+        
+        <div id="difficultySelector" style="margin: 0;">
+      
+            <select id="difficultySelect">
+                <option value="easy">EASY</option>
+                <option value="normal" selected>NORMAL</option>
+                <option value="hard">HARD</option>
+            </select>
+        </div>
+    </div>
+    
+    </div>
+</div>
+
 <script>
 // Canvas and Game Variables
 var myGamePiece;
-var highScore = 0;
+var highScores = { easy: 0, normal: 0, hard: 0 }; // Separate high scores for each difficulty
 var gameRunning = false;
+var gamePaused = false;
 var myObstacles = [];
+var myCoins = []; // Array to hold basketball objects
 var myScore;
+var totalCoins = 0; // Total basketballs collected (currency)
+var coinsCollectedThisGame = 0; // Basketballs collected in current game
+var difficulty = 'normal'; // Default difficulty
+var impossibleUnlocked = false; // Track if impossible mode is unlocked
+
+// Cosmetics system
+var ownedCosmetics = {
+    skins: ['default'],
+    pipes: ['default'],
+    backgrounds: ['default']
+};
+var equippedCosmetics = {
+    skin: 'default',
+    pipe: 'default',
+    background: 'default'
+};
+
+// Shop items
+var shopItems = {
+    skins: [
+        { id: 'default', name: 'Default LeBron', price: 0, owned: true, skinColor: '#964B00' },
+        { id: 'gold', name: 'Gold LeBron', price: 100, skinColor: '#FFD700' },
+        { id: 'purple', name: 'Purple LeBron', price: 150, skinColor: '#9966FF' },
+        { id: 'red', name: 'Red LeBron', price: 200, skinColor: '#FF4444' },
+        { id: 'miami', name: 'Vice LeBron', price: 250, skinColor: '#00E0FF' },
+        { id: 'ghost', name: 'Ghost LeBron', price: 275, skinColor: '#C0C0C0' },
+        { id: 'shadow', name: 'Shadow LeBron', price: 325, skinColor: '#111111' }
+    ],
+    pipes: [
+        { id: 'default', name: 'Basketball Hoop', price: 0, owned: true, style: 'hoop' },
+        { id: 'defender', name: 'Defender', price: 150, style: 'defender' },
+        { id: 'mascot', name: 'Mascot', price: 200, style: 'mascot' },
+        { id: 'foam', name: 'Foam Finger', price: 250, style: 'foam' },
+        { id: 'scoreboard', name: 'Scoreboard', price: 300, style: 'scoreboard' }
+    ],
+    backgrounds: [
+        { id: 'default', name: 'Original Sky', price: 0, owned: true, bgImage: 'Gemini_Generated_Image_x51mbwx51mbwx51m.png' },
+        { id: 'sunset', name: 'Sunset', price: 150, bgImage: 'sunset.jpeg' },
+        { id: 'night', name: 'Space', price: 200, bgImage: 'space.jpeg' },
+        { id: 'space', name: 'Evil', price: 300, bgImage: 'evil.jpeg' }
+    ]
+};
+
+// Difficulty settings
+var difficultySettings = {
+    easy: { speedMultiplier: 0.02, gapMin: 100, gapMax: 140, ballChance: 0.2 },
+    normal: { speedMultiplier: 0.04, gapMin: 80, gapMax: 120, ballChance: 0.3 },
+    hard: { speedMultiplier: 0.055, gapMin: 60, gapMax: 100, ballChance: 0.4 },
+    impossible: { speedMultiplier: 0.08, gapMin: 40, gapMax: 70, ballChance: 0.5 }
+};
+
+// Helper function to get equipped skin color
+function getEquippedSkinColor() {
+    var equippedSkin = shopItems.skins.find(s => s.id === equippedCosmetics.skin);
+    return equippedSkin ? equippedSkin.skinColor : '#964B00';
+}
+
+var backgroundImage = null;
+var backgroundImageLoaded = false;
+var backgroundCssUrl = '';
+
+// --- Obstacle Style Definitions ---
+function drawHoop(ctx, comp) {
+    const w = comp.width;
+    const s = w / 24; // scale factor relative to base width 24
+    const bw = w + 12 * s;
+    const bh = 14 * s;
+    const rimW = 18 * s;
+    const rimH = 4 * s;
+    // Backboard
+    ctx.fillStyle = '#e6e6e6';
+    ctx.fillRect(comp.x - (bw - w)/2, comp.y, bw, bh);
+    // Inner square
+    ctx.strokeStyle = '#ff6b35';
+    ctx.lineWidth = 1.5 * s;
+    ctx.strokeRect(comp.x + w/2 - 7*s, comp.y + 3*s, 14*s, 9*s);
+    // Rim
+    ctx.fillStyle = '#ff6b35';
+    ctx.fillRect(comp.x + w/2 - rimW/2, comp.y + bh, rimW, rimH);
+    // Net
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1 * s;
+    ctx.beginPath();
+    ctx.moveTo(comp.x + w/2 - rimW/2, comp.y + bh + rimH);
+    ctx.lineTo(comp.x + w/2, comp.y + bh + 8*s);
+    ctx.lineTo(comp.x + w/2 + rimW/2, comp.y + bh + rimH);
+    ctx.stroke();
+    // Pole
+    ctx.fillStyle = '#888';
+    ctx.fillRect(comp.x + w/2 - 3*s, comp.y + bh + rimH, 6*s, comp.height - (bh + rimH));
+}
+
+function drawDefender(ctx, comp) {
+    const w = comp.width;
+    const s = w / 24;
+    const cx = comp.x + w / 2;
+    const headH = 6 * s;
+    const neckH = 1.2 * s;
+    const torsoH = 11 * s;
+    const shortsH = 5 * s;
+    const legH = comp.height - (headH + neckH + torsoH + shortsH + 4 * s);
+    const torsoTop = comp.y + headH + neckH;
+
+    // Head
+    ctx.fillStyle = '#b5651d';
+    ctx.fillRect(cx - 4 * s, comp.y, 8 * s, headH);
+    // Neck
+    ctx.fillRect(cx - 1.5 * s, comp.y + headH, 3 * s, neckH);
+
+    // Jersey torso
+    ctx.fillStyle = '#2e7d32';
+    ctx.fillRect(cx - 6 * s, torsoTop, 12 * s, torsoH);
+
+    // Right arm (up, slight angle)
+    ctx.save();
+    ctx.translate(cx + 6 * s, torsoTop + 3 * s);
+    ctx.rotate(15 * Math.PI / 180);
+    ctx.fillRect(0, 0, 3 * s, 14 * s);
+    ctx.restore();
+
+    // Left arm (fully extended for block)
+    ctx.save();
+    ctx.translate(cx - 6 * s, torsoTop + 2 * s);
+    ctx.rotate(-35 * Math.PI / 180);
+    ctx.fillRect(-3 * s, -2 * s, 3 * s, 18 * s);
+    ctx.restore();
+
+    // Shorts
+    ctx.fillStyle = '#1b5e20';
+    ctx.fillRect(cx - 6 * s, torsoTop + torsoH, 12 * s, shortsH);
+
+    // Legs (tucked, slight forward lean)
+    ctx.save();
+    ctx.translate(cx - 3 * s, torsoTop + torsoH + shortsH);
+    ctx.rotate(10 * Math.PI / 180);
+    ctx.fillRect(0, 0, 3 * s, legH);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(cx + 2 * s, torsoTop + torsoH + shortsH);
+    ctx.rotate(-5 * Math.PI / 180);
+    ctx.fillRect(0, 0, 3 * s, legH);
+    ctx.restore();
+
+    // Hands (simple blocks at arm tips)
+    ctx.fillStyle = '#b5651d';
+    ctx.fillRect(cx + 6 * s + 3 * s, torsoTop - 2 * s, 3 * s, 3 * s);
+    ctx.fillRect(cx - 6 * s - 3 * s, torsoTop - 8 * s, 3 * s, 3 * s);
+}
+
+function drawMascot(ctx, comp) {
+    const w = comp.width;
+    const s = w / 24;
+    // Foam-cutout Lakers lion mascot in same outlined style as foam finger
+    const centerX = comp.x + w / 2;
+    const bottom = comp.y + comp.height - 2 * s;
+    const headH = 11 * s;
+    const bodyH = comp.height - headH - 6 * s;
+    const headTop = comp.y + 1 * s;
+    const bodyTop = headTop + headH - 2 * s;
+
+    ctx.fillStyle = '#552583';
+    ctx.strokeStyle = '#FDB927';
+    ctx.lineWidth = 1.6 * s;
+
+    // Body block
+    ctx.beginPath();
+    ctx.moveTo(centerX - 9 * s, bottom);
+    ctx.lineTo(centerX - 9 * s, bodyTop + 3 * s);
+    ctx.lineTo(centerX - 11 * s, bodyTop + s);
+    ctx.lineTo(centerX - 9 * s, bodyTop - 2 * s);
+    ctx.lineTo(centerX + 9 * s, bodyTop - 2 * s);
+    ctx.lineTo(centerX + 11 * s, bodyTop + s);
+    ctx.lineTo(centerX + 9 * s, bodyTop + 3 * s);
+    ctx.lineTo(centerX + 9 * s, bottom);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Head with simple mane bumps
+    ctx.beginPath();
+    ctx.moveTo(centerX - 6 * s, bodyTop - 2 * s);
+    ctx.lineTo(centerX - 8 * s, headTop + 3 * s);
+    ctx.lineTo(centerX - 6 * s, headTop + 1 * s);
+    ctx.lineTo(centerX - 2 * s, headTop);
+    ctx.lineTo(centerX + 2 * s, headTop);
+    ctx.lineTo(centerX + 6 * s, headTop + 1 * s);
+    ctx.lineTo(centerX + 8 * s, headTop + 3 * s);
+    ctx.lineTo(centerX + 6 * s, bodyTop - 2 * s);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Ears
+    ctx.beginPath();
+    ctx.moveTo(centerX - 6 * s, headTop + 1 * s);
+    ctx.lineTo(centerX - 8 * s, headTop - 2 * s);
+    ctx.lineTo(centerX - 5 * s, headTop);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(centerX + 6 * s, headTop + 1 * s);
+    ctx.lineTo(centerX + 8 * s, headTop - 2 * s);
+    ctx.lineTo(centerX + 5 * s, headTop);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Face details (foam print style)
+    ctx.fillStyle = '#FDB927';
+    ctx.fillRect(centerX - 3 * s, headTop + 4 * s, 2 * s, 2 * s);
+    ctx.fillRect(centerX + 1 * s, headTop + 4 * s, 2 * s, 2 * s);
+    ctx.fillRect(centerX - 1 * s, headTop + 7 * s, 2 * s, 1 * s);
+
+    // Printed chest mark
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${8 * s}px sans-serif`;
+    ctx.fillText('LA', centerX, bodyTop + bodyH / 2);
+}
+
+function drawFoamFinger(ctx, comp) {
+    const w = comp.width;
+    const s = w / 24;
+    const centerX = comp.x + w / 2;
+    const baseY = comp.y + comp.height - 2 * s;
+    const palmTop = comp.y + 14 * s;
+    const fingerW = 4 * s;
+    const gap = 1 * s;
+    const pinkyLeft = centerX - 9 * s;
+    const ringLeft = pinkyLeft + fingerW + gap;
+    const middleLeft = ringLeft + fingerW + gap;
+    const indexLeft = middleLeft + fingerW + gap;
+
+    ctx.fillStyle = '#c62828';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5 * s;
+
+    function drawFinger(left, topY) {
+        ctx.beginPath();
+        ctx.moveTo(left, baseY);
+        ctx.lineTo(left, topY + s);
+        ctx.quadraticCurveTo(left, topY, left + s, topY);
+        ctx.lineTo(left + fingerW - s, topY);
+        ctx.quadraticCurveTo(left + fingerW, topY, left + fingerW, topY + s);
+        ctx.lineTo(left + fingerW, baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    // Palm block
+    ctx.beginPath();
+    ctx.moveTo(pinkyLeft, baseY);
+    ctx.lineTo(pinkyLeft, palmTop + 6 * s);
+    ctx.lineTo(pinkyLeft - 3 * s, palmTop + 4 * s);
+    ctx.lineTo(pinkyLeft - 3 * s, palmTop - 2 * s);
+    ctx.lineTo(pinkyLeft + s, palmTop - 3 * s);
+    ctx.lineTo(pinkyLeft + s, palmTop + 2 * s);
+    ctx.lineTo(indexLeft + fingerW, palmTop + 2 * s);
+    ctx.lineTo(indexLeft + fingerW, baseY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Fingers (ascending heights for a fan foam hand)
+    drawFinger(pinkyLeft, comp.y + 6 * s);
+    drawFinger(ringLeft, comp.y + 4 * s);
+    drawFinger(middleLeft, comp.y + 2 * s);
+    drawFinger(indexLeft, comp.y - 6 * s);
+
+    // Thumb shape along the side
+    ctx.beginPath();
+    ctx.moveTo(pinkyLeft + s, palmTop + 4 * s);
+    ctx.lineTo(pinkyLeft - 4 * s, palmTop + 2 * s);
+    ctx.lineTo(pinkyLeft - 4 * s, palmTop - 2 * s);
+    ctx.lineTo(pinkyLeft + s, palmTop - 3 * s);
+    ctx.quadraticCurveTo(pinkyLeft + 4 * s, palmTop - 4 * s, pinkyLeft + 4 * s, palmTop);
+    ctx.lineTo(pinkyLeft + 4 * s, palmTop + 4 * s);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Foam finger print
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${10 * s}px sans-serif`;
+    ctx.fillText('#1', centerX, comp.y + comp.height / 2);
+}
+
+function drawScoreboard(ctx, comp) {
+    // Traditional scoreboard rotated vertical (on its side)
+    const bodyW = comp.width + 12;
+    const s = bodyW / 48;
+    const bodyH = comp.height - 2 * s;
+    const x0 = comp.x - 6 * s;
+    const y0 = comp.y + s;
+
+    // Main shell
+    ctx.fillStyle = '#111';
+    ctx.fillRect(x0, y0, bodyW, bodyH);
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 1.2 * s;
+    ctx.strokeRect(x0, y0, bodyW, bodyH);
+
+    // Segments stacked top-to-bottom (because rotated)
+    const sectionH = bodyH / 4;
+
+    // Team labels strip
+    ctx.fillStyle = '#222';
+    ctx.fillRect(x0 + 1.5 * s, y0 + 1.5 * s, bodyW - 3 * s, sectionH - 3 * s);
+    ctx.fillStyle = '#0f0';
+    ctx.font = `${6 * s}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('HOME', x0 + bodyW / 2, y0 + sectionH / 2);
+    ctx.fillStyle = '#f00';
+    ctx.fillText('AWAY', x0 + bodyW / 2, y0 + sectionH / 2 + 6 * s);
+
+    // Home score digits
+    ctx.fillStyle = '#0f0';
+    ctx.fillRect(x0 + 2 * s, y0 + sectionH + 2 * s, bodyW - 4 * s, sectionH - 4 * s);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x0 + 3 * s, y0 + sectionH + 3 * s, bodyW - 6 * s, sectionH - 6 * s);
+    ctx.fillStyle = '#0f0';
+    ctx.font = `${12 * s}px monospace`;
+    ctx.fillText('88', x0 + bodyW / 2, y0 + sectionH + (sectionH / 2));
+
+    // Away score digits
+    ctx.fillStyle = '#f00';
+    ctx.fillRect(x0 + 2 * s, y0 + 2 * sectionH + 2 * s, bodyW - 4 * s, sectionH - 4 * s);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x0 + 3 * s, y0 + 2 * sectionH + 3 * s, bodyW - 6 * s, sectionH - 6 * s);
+    ctx.fillStyle = '#f00';
+    ctx.font = `${12 * s}px monospace`;
+    ctx.fillText('88', x0 + bodyW / 2, y0 + 2 * sectionH + (sectionH / 2));
+
+    // Clock / period box
+    ctx.fillStyle = '#ff6b35';
+    ctx.fillRect(x0 + 2 * s, y0 + 3 * sectionH + 2 * s, bodyW - 4 * s, sectionH - 4 * s);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x0 + 3 * s, y0 + 3 * sectionH + 3 * s, bodyW - 6 * s, sectionH - 6 * s);
+    ctx.fillStyle = '#ff6b35';
+    ctx.font = `${9 * s}px monospace`;
+    ctx.fillText('88:88', x0 + bodyW / 2, y0 + 3 * sectionH + (sectionH / 2));
+}
+
+var obstacleStyles = {
+    hoop: drawHoop,
+    defender: drawDefender,
+    mascot: drawMascot,
+    foam: drawFoamFinger,
+    scoreboard: drawScoreboard
+};
+
+function getEquippedObstacleStyle() {
+    var equippedPipe = shopItems.pipes.find(p => p.id === equippedCosmetics.pipe);
+    return (equippedPipe && equippedPipe.style) ? equippedPipe.style : 'hoop';
+}
+
+// Build unique SVGs per skin so each LeBron model looks different
+function createSkinDataUrl(bodyColor, jerseyColor, accentColor) {
+        var svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+    <rect x="0" y="0" width="32" height="32" fill="none" />
+    <rect x="8" y="8" width="12" height="10" fill="${bodyColor}" />
+    <rect x="8" y="8" width="12" height="2" fill="#000000" />
+    <rect x="11" y="11" width="2" height="2" fill="#FFFFFF" />
+    <rect x="15" y="11" width="2" height="2" fill="#FFFFFF" />
+    <rect x="6" y="18" width="20" height="8" fill="${jerseyColor}" />
+    <rect x="10" y="20" width="2" height="4" fill="${accentColor}" />
+    <rect x="14" y="20" width="2" height="4" fill="${accentColor}" />
+    <rect x="2" y="18" width="4" height="4" fill="${jerseyColor}" />
+    <rect x="26" y="18" width="4" height="4" fill="${jerseyColor}" />
+</svg>`;
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+// Detailed skin with face, hairline, jersey number, waistband, and shoes
+function createDetailedSkinDataUrl(bodyColor, jerseyColor, accentColor) {
+        var hairColor = '#3a1f0f';
+        var beardColor = '#2d1a0d';
+        var stripeColor = jerseyColor;
+        var svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+    <rect x="0" y="0" width="32" height="32" fill="none" />
+    <!-- head + hairline -->
+    <rect x="10" y="4" width="12" height="8" fill="${bodyColor}" />
+    <rect x="10" y="4" width="12" height="2" fill="${hairColor}" />
+    <!-- eyes -->
+    <rect x="13" y="7" width="2" height="2" fill="#000000" />
+    <rect x="17" y="7" width="2" height="2" fill="#000000" />
+    <!-- mouth/beard line -->
+    <rect x="14" y="10" width="4" height="1" fill="${beardColor}" />
+    <rect x="12" y="11" width="8" height="1" fill="${beardColor}" />
+    <!-- neck -->
+    <rect x="13" y="12" width="6" height="2" fill="${bodyColor}" />
+    <!-- arms -->
+    <rect x="6" y="15" width="6" height="3" fill="${bodyColor}" />
+    <rect x="20" y="15" width="6" height="3" fill="${bodyColor}" />
+    <!-- torso jersey -->
+    <rect x="8" y="14" width="16" height="10" fill="${jerseyColor}" />
+    <rect x="8" y="14" width="16" height="2" fill="${stripeColor}" />
+    <!-- jersey side stripes -->
+    <rect x="8" y="16" width="2" height="8" fill="${accentColor}" />
+    <rect x="22" y="16" width="2" height="8" fill="${accentColor}" />
+    <!-- jersey number 23 -->
+    <rect x="13" y="17" width="2" height="6" fill="${accentColor}" />
+    <rect x="15" y="17" width="2" height="2" fill="${accentColor}" />
+    <rect x="17" y="17" width="2" height="6" fill="${accentColor}" />
+    <rect x="13" y="21" width="6" height="2" fill="${accentColor}" />
+    <!-- shorts + waistband -->
+    <rect x="8" y="24" width="16" height="5" fill="${jerseyColor}" />
+    <rect x="8" y="24" width="16" height="1" fill="${stripeColor}" />
+    <rect x="8" y="25" width="16" height="1" fill="${accentColor}" />
+    <!-- legs -->
+    <rect x="11" y="27" width="3" height="3" fill="${bodyColor}" />
+    <rect x="18" y="27" width="3" height="3" fill="${bodyColor}" />
+    <!-- shoes -->
+    <rect x="10" y="30" width="5" height="1" fill="#222" />
+    <rect x="17" y="30" width="5" height="1" fill="#222" />
+</svg>`;
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+// Ghost variant with wavy base and hollow eyes
+function createGhostSkinDataUrl() {
+        var bodyColor = '#d7d7d7';
+        var shadowColor = '#b0b0b0';
+        var eyeColor = '#000000';
+        var glowColor = '#ffffff';
+        var svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+    <rect x="0" y="0" width="32" height="32" fill="none" />
+    <!-- main sheet -->
+    <rect x="9" y="5" width="14" height="18" fill="${bodyColor}" />
+    <rect x="9" y="5" width="14" height="2" fill="${shadowColor}" />
+    <!-- wavy base -->
+    <rect x="9" y="23" width="3" height="3" fill="${bodyColor}" />
+    <rect x="12" y="22" width="3" height="4" fill="${bodyColor}" />
+    <rect x="15" y="23" width="3" height="3" fill="${bodyColor}" />
+    <rect x="18" y="22" width="3" height="4" fill="${bodyColor}" />
+    <rect x="21" y="23" width="3" height="3" fill="${bodyColor}" />
+    <!-- ghost tail -->
+    <rect x="14" y="26" width="4" height="3" fill="${bodyColor}" />
+    <rect x="15" y="29" width="2" height="2" fill="${bodyColor}" />
+    <!-- eyes -->
+    <rect x="13" y="10" width="3" height="3" fill="${eyeColor}" />
+    <rect x="16" y="10" width="3" height="3" fill="${eyeColor}" />
+    <rect x="14" y="11" width="1" height="1" fill="${glowColor}" />
+    <rect x="17" y="11" width="1" height="1" fill="${glowColor}" />
+    <!-- mouth -->
+    <rect x="14" y="15" width="4" height="2" fill="${eyeColor}" />
+    <rect x="15" y="17" width="2" height="1" fill="${eyeColor}" />
+    <!-- faint arms -->
+    <rect x="6" y="14" width="4" height="3" fill="${shadowColor}" />
+    <rect x="22" y="14" width="4" height="3" fill="${shadowColor}" />
+</svg>`;
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+// Gold variant with solid-gold look (highlights and shadows)
+function createGoldSkinDataUrl() {
+        var base = '#caa968';
+        var dark = '#8b6f00';
+        var bright = '#f5e19c';
+        var shadow = '#7a5c00';
+        var svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+    <rect x="0" y="0" width="32" height="32" fill="none" />
+    <!-- head block with highlight -->
+    <rect x="10" y="4" width="12" height="8" fill="${base}" />
+    <rect x="10" y="4" width="12" height="2" fill="${dark}" />
+    <rect x="11" y="5" width="10" height="1" fill="${bright}" />
+    <!-- eyes as carved slots -->
+    <rect x="13" y="7" width="2" height="2" fill="${shadow}" />
+    <rect x="17" y="7" width="2" height="2" fill="${shadow}" />
+    <!-- mouth groove -->
+    <rect x="14" y="10" width="4" height="1" fill="${shadow}" />
+    <rect x="12" y="11" width="8" height="1" fill="${shadow}" />
+    <!-- neck -->
+    <rect x="13" y="12" width="6" height="2" fill="${base}" />
+    <!-- arms -->
+    <rect x="6" y="15" width="6" height="3" fill="${base}" />
+    <rect x="20" y="15" width="6" height="3" fill="${base}" />
+    <!-- torso -->
+    <rect x="8" y="14" width="16" height="10" fill="${base}" />
+    <rect x="8" y="14" width="16" height="2" fill="${dark}" />
+    <rect x="9" y="15" width="14" height="1" fill="${bright}" />
+    <!-- beveled side edges -->
+    <rect x="8" y="16" width="2" height="8" fill="${dark}" />
+    <rect x="22" y="16" width="2" height="8" fill="${bright}" />
+    <!-- embossed number 23 -->
+    <rect x="13" y="17" width="2" height="6" fill="${shadow}" />
+    <rect x="15" y="17" width="2" height="2" fill="${shadow}" />
+    <rect x="17" y="17" width="2" height="6" fill="${shadow}" />
+    <rect x="13" y="21" width="6" height="2" fill="${shadow}" />
+    <!-- shorts with metal band -->
+    <rect x="8" y="24" width="16" height="5" fill="${base}" />
+    <rect x="8" y="24" width="16" height="1" fill="${dark}" />
+    <rect x="8" y="25" width="16" height="1" fill="${bright}" />
+    <!-- legs -->
+    <rect x="11" y="27" width="3" height="3" fill="${base}" />
+    <rect x="18" y="27" width="3" height="3" fill="${base}" />
+    <!-- shoes / pedestal -->
+    <rect x="10" y="30" width="5" height="1" fill="${dark}" />
+    <rect x="17" y="30" width="5" height="1" fill="${dark}" />
+</svg>`;
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+var skinImageMap = {
+    default: createDetailedSkinDataUrl('#a66c35', '#552583', '#FDB927'),
+    gold: createGoldSkinDataUrl(),
+    purple: createDetailedSkinDataUrl('#a66c35', '#7a3ff0', '#ffd54f'),
+    red: createDetailedSkinDataUrl('#a66c35', '#c62828', '#ffeb3b'),
+    miami: createDetailedSkinDataUrl('#a66c35', '#00e0ff', '#ff3bd4'),
+    ghost: createGhostSkinDataUrl(),
+    shadow: createDetailedSkinDataUrl('#111111', '#222222', '#555555')
+};
+
+function getEquippedSkinImage() {
+    return skinImageMap[equippedCosmetics.skin] || skinImageMap.default;
+}
+
+function applyCanvasBackgroundStyle() {
+    if (!myGameArea || !myGameArea.canvas) return;
+    if (backgroundCssUrl) {
+        myGameArea.canvas.style.backgroundImage = "url('" + backgroundCssUrl + "')";
+        myGameArea.canvas.style.backgroundSize = 'cover';
+        myGameArea.canvas.style.backgroundPosition = 'center center';
+        myGameArea.canvas.style.backgroundRepeat = 'no-repeat';
+    } else {
+        myGameArea.canvas.style.backgroundImage = '';
+        myGameArea.canvas.style.backgroundColor = '#000';
+    }
+}
+
+// Helper function to get equipped background image path
+function getEquippedBackgroundImage() {
+    var equippedBg = shopItems.backgrounds.find(b => b.id === equippedCosmetics.background);
+    return equippedBg ? (equippedBg.bgImage || '') : '';
+}
+
+function loadBackgroundImage() {
+    var imgPath = getEquippedBackgroundImage();
+    if (imgPath) {
+        backgroundImageLoaded = false;
+        backgroundImage = new Image();
+        backgroundImage.onload = function() { 
+            backgroundImageLoaded = true; 
+            console.log('Background loaded:', imgPath);
+        };
+        const bust = imgPath + (imgPath.includes('?') ? '&' : '?') + 'v=' + Date.now();
+        backgroundImage.src = bust;
+        backgroundCssUrl = bust;
+        applyCanvasBackgroundStyle();
+    } else {
+        backgroundImage = null;
+        backgroundImageLoaded = false;
+        backgroundCssUrl = '';
+        applyCanvasBackgroundStyle();
+    }
+}
+
+// Helper function to get current high score (impossible uses hard's score)
+function getCurrentHighScore() {
+    return difficulty === 'impossible' ? highScores.hard : highScores[difficulty];
+}
+
+// Helper function to update high score display
+function updateHighScoreDisplay() {
+    var currentHigh = getCurrentHighScore();
+    document.getElementById("highText").innerHTML = "HIGH SCORE: <b>" + currentHigh + "</b>";
+}
+
+// Helper function to update coin display
+function updateCoinDisplay() {
+    document.getElementById('coinCount').textContent = coinsCollectedThisGame;
+    document.getElementById('menuCoinCount').textContent = totalCoins;
+    document.getElementById('shopCoinCount').textContent = totalCoins;
+}
+
+// Save coins to localStorage
+function saveCoins() {
+    try {
+        localStorage.setItem('lb_total_coins', totalCoins);
+        localStorage.setItem('lb_owned_cosmetics', JSON.stringify(ownedCosmetics));
+        localStorage.setItem('lb_equipped_cosmetics', JSON.stringify(equippedCosmetics));
+    } catch(e) {
+        console.error("Could not save coins:", e);
+    }
+}
+
+// Helper function to add impossible mode to dropdown
+function addImpossibleToSelector() {
+    var select = document.getElementById('difficultySelect');
+    if (select && !select.querySelector('option[value="impossible"]')) {
+        var option = document.createElement('option');
+        option.value = 'impossible';
+        option.textContent = '💀 IMPOSSIBLE 💀';
+        select.appendChild(option);
+        console.log('Impossible mode added to selector');
+    }
+}
+
+function ensureImpossibleOption() {
+    if (impossibleUnlocked) {
+        addImpossibleToSelector();
+    }
+}
+
+// === DEVELOPER CHEATS (Call in browser console) ===
+// Unlock impossible mode: devUnlockImpossible()
+// Give coins for testing: devGiveCoins(amount) - e.g., devGiveCoins(9999)
+// Reset all progress: devResetGame()
+// Set current run score (frames / 10): devSetScore(350) // sets score to 350
+function devUnlockImpossible() {
+    impossibleUnlocked = true;
+    try { localStorage.setItem('lb_impossible_unlocked', 'true'); } catch(e) {}
+    addImpossibleToSelector();
+    console.log('✅ IMPOSSIBLE MODE UNLOCKED! Option added to selector.');
+}
+
+function devGiveCoins(amount) {
+    totalCoins += amount;
+    saveCoins();
+    updateCoinDisplay();
+    console.log(`✅ GAVE ${amount} BALLS! Total: ${totalCoins}`);
+}
+
+function devResetGame() {
+    localStorage.clear();
+    totalCoins = 0;
+    impossibleUnlocked = false;
+    ownedCosmetics = { skins: ['default'], pipes: ['default'], backgrounds: ['default'] };
+    equippedCosmetics = { skin: 'default', pipe: 'default', background: 'default' };
+    highScores = { easy: 0, normal: 0, hard: 0 };
+    loadBackgroundImage();
+    updateCoinDisplay();
+    updateHighScoreDisplay();
+    console.log('✅ GAME RESET! Refresh to see changes.');
+}
+
+function devSetScore(score) {
+    if (!myGameArea || !myScore) {
+        console.warn('Game not running; start a game first.');
+        return;
+    }
+    var frames = Math.max(0, Math.floor(score * 10));
+    myGameArea.frameNo = frames;
+    myScore.text = "SCORE: " + score;
+    console.log(`✅ Score set to ${score} (frameNo=${frames}).`);
+}
+
+// Load coins from localStorage
+function loadCoins() {
+    try {
+        totalCoins = parseInt(localStorage.getItem('lb_total_coins')) || 0;
+        var saved_owned = localStorage.getItem('lb_owned_cosmetics');
+        var saved_equipped = localStorage.getItem('lb_equipped_cosmetics');
+        if (saved_owned) ownedCosmetics = JSON.parse(saved_owned);
+        if (saved_equipped) equippedCosmetics = JSON.parse(saved_equipped);
+        loadBackgroundImage();
+        updateCoinDisplay();
+    } catch(e) {
+        console.error("Could not load coins:", e);
+    }
+}
+
+// Scale factor relative to the original 480x270 design
+function getScaleFactor() {
+    if (!myGameArea || !myGameArea.width || !myGameArea.height) return 1;
+    return Math.max(myGameArea.width / 480, myGameArea.height / 270);
+}
 
 // --- Utility Functions ---
 
@@ -261,40 +1406,106 @@ document.getElementById('messageCloseBtn').addEventListener('click', hideMessage
 
 // --- Game Initialization and Flow ---
 
+function pauseGame() {
+    if (!gameRunning || gamePaused) return;
+    gamePaused = true;
+    document.getElementById('pauseMenu').style.display = 'block';
+    document.getElementById('pauseBtn').style.display = 'none';
+}
+
+function resumeGame() {
+    if (!gameRunning) return;
+    gamePaused = false;
+    document.getElementById('pauseMenu').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'block';
+}
+
+function quitToMenu() {
+    gameRunning = false;
+    gamePaused = false;
+    myGameArea.stop();
+    
+    if (myGameArea.canvas && myGameArea.canvas.parentNode) {
+        myGameArea.canvas.parentNode.removeChild(myGameArea.canvas);
+    }
+    
+    document.getElementById('pauseMenu').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('menu').style.display = 'block';
+}
+
 function startGameFromMenu() {
     hideMessage();
+    ensureImpossibleOption();
     document.getElementById("menu").style.display = "none";
+    document.getElementById("pauseBtn").style.display = "block";
+    document.getElementById("coinCounter").style.display = "block";
+    coinsCollectedThisGame = 0;
+    updateCoinDisplay();
+    gamePaused = false;
     startGame();
 }
 
 function startGame() {
     gameRunning = true;
-    myObstacles = []; 
-    
-    // Pixelated LeBron SVG - Base64 Encoded (Lakers Purple/Gold, including '23' on jersey)
-    const playerSvgData = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEwIiBmaWxsPSIjOTY0QjAwIi8+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjIiIGZpbGw9IiMwMDAwMDAiLz4KICA8cmVjdCB4PSIxMSIgeT0iMTEiIHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiNGRkZGRkYiLz4KICA8cmVjdCB4PSIxNSIgeT0iMTEiIHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiNGRkZGRkYiLz4KICA8cmVjdCB4PSI2IiB5PSIxOCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjgiIGZpbGw9IiM1NTI1ODMiLz4KICA8cmVjdCB4PSIxMCIgeT0iMjAiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIGZpbGw9IiNGRkM3MkMiLz4KICA8cmVjdCB4PSIxNCIgeT0iMjAiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIGZpbGw9IiNGRkM3MkMiLz4KICA8cmVjdCB4PSIyIiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iNCIgZmlsbD0iI0ZGQzcyQyIvPgogIDxyZWN0IHg9IjI2IiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iNCIgZmlsbD0iI0ZGQzcyQyIvPgo8L3N2Zz4="; 
+    myObstacles = [];
+    myCoins = []; 
+    myGameArea.start();
 
     // Player Piece: width, height, image source, x, y, type="image"
-    myGamePiece = new component(40, 30, playerSvgData, 10, 120, "image"); 
-    myGamePiece.gravity = 0.15;
+    var playerSvgData = getEquippedSkinImage();
+    var sf = getScaleFactor();
+    var playerW = 40 * sf;
+    var playerH = 30 * sf;
+    myGamePiece = new component(playerW, playerH, playerSvgData, 10 * sf, 120 * sf, "image"); 
+    myGamePiece.gravity = 0.15 * sf;
     
     myScore = new component("30px", "Press Start 2P", "black", 280, 40, "text"); /* Using pixel font for score */
-    myGameArea.start();
 }
 
 var myGameArea = {
     canvas : document.createElement("canvas"),
     start : function() {
-        this.canvas.width = 480;
-        this.canvas.height = 270;
         this.context = this.canvas.getContext("2d");
-        
+        this.canvas.id = 'gameCanvas';
         document.body.insertBefore(this.canvas, document.getElementById('menu'));
+
+        this.resize();
+        window.addEventListener('resize', this.resize.bind(this));
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
+        applyCanvasBackgroundStyle();
+    },
+    resize : function() {
+        const dpr = window.devicePixelRatio || 1;
+        this.dpr = dpr;
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.canvas.style.width = this.width + 'px';
+        this.canvas.style.height = this.height + 'px';
+        this.canvas.width = Math.floor(this.width * dpr);
+        this.canvas.height = Math.floor(this.height * dpr);
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.context.scale(dpr, dpr);
+        this.context.imageSmoothingEnabled = false;
+
+        // Keep player within bounds on resize
+        if (myGamePiece) {
+            var sf = getScaleFactor();
+            myGamePiece.width = 40 * sf;
+            myGamePiece.height = 30 * sf;
+            myGamePiece.gravity = 0.15 * sf;
+            myGamePiece.x = Math.min(myGamePiece.x, this.width - myGamePiece.width);
+            myGamePiece.y = Math.min(myGamePiece.y, this.height - myGamePiece.height);
+        }
     },
     clear : function() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (backgroundImage && backgroundImageLoaded) {
+            this.context.drawImage(backgroundImage, 0, 0, this.width, this.height);
+        } else {
+            this.context.fillStyle = '#000';
+            this.context.fillRect(0, 0, this.width, this.height);
+        }
     },
     stop : function() {
         clearInterval(this.interval);
@@ -304,6 +1515,7 @@ var myGameArea = {
 // --- Game Components (Player/Obstacle/Text/Image) ---
 
 function component(width, height, colorOrImgSrc, x, y, type) {
+    var styleId = arguments.length > 6 ? arguments[6] : null;
     this.type = type;
     this.score = 0;
     this.width = width;
@@ -314,7 +1526,13 @@ function component(width, height, colorOrImgSrc, x, y, type) {
     this.y = y;
     this.gravity = 0;
     this.gravitySpeed = 0;
+    this.displayAngle = 0;
+    this.scaleX = 1;
+    this.scaleY = 1;
+    this.squashTimer = 0;
     
+    this.styleId = styleId;
+
     if (this.type === 'image') {
         this.img = new Image();
         this.img.src = colorOrImgSrc;
@@ -334,21 +1552,96 @@ function component(width, height, colorOrImgSrc, x, y, type) {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = this.color;
             ctx.fillText(this.text, this.x, this.y);
+        } else if (this.type === "coin") {
+            // Draw basketball
+            ctx.save();
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            const radius = this.width / 2;
+            
+            // Draw orange circle
+            ctx.fillStyle = '#FF6B35';
+            ctx.shadowColor = '#FF6B35';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw black lines
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 0;
+            
+            // Vertical line
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - radius);
+            ctx.lineTo(centerX, centerY + radius);
+            ctx.stroke();
+            
+            // Horizontal line
+            ctx.beginPath();
+            ctx.moveTo(centerX - radius, centerY);
+            ctx.lineTo(centerX + radius, centerY);
+            ctx.stroke();
+            
+            // Curved lines
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, Math.PI * 0.25, Math.PI * 0.75);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, Math.PI * 1.25, Math.PI * 1.75);
+            ctx.stroke();
+            
+            ctx.restore();
         } else if (this.type === "image" && this.loaded) {
             ctx.save();
+            ctx.imageSmoothingEnabled = false;
             
-            // Rotation for "flappy" effect
-            const rotationDegree = Math.min(Math.max(this.gravitySpeed * 10, -30), 45); 
-            
-            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-            ctx.rotate(rotationDegree * Math.PI / 180);
+            // Smoothed rotation and squash/stretch
+            const targetAngle = Math.min(Math.max(this.gravitySpeed * 8, -20), 35);
+            this.displayAngle = this.displayAngle * 0.85 + targetAngle * 0.15;
+
+            // Squash on jump, stretch on rise, slight squat on fall
+            if (this.squashTimer > 0) {
+                this.scaleX = 1.08;
+                this.scaleY = 0.92;
+                this.squashTimer = Math.max(0, this.squashTimer - 20);
+            } else if (this.gravitySpeed < -0.5) {
+                this.scaleX = 0.98;
+                this.scaleY = 1.04;
+            } else if (this.gravitySpeed > 1) {
+                this.scaleX = 1.02;
+                this.scaleY = 0.96;
+            } else {
+                this.scaleX = 1;
+                this.scaleY = 1;
+            }
+
+            const drawX = Math.round(this.x);
+            const drawY = Math.round(this.y);
+            ctx.translate(drawX + this.width / 2, drawY + this.height / 2);
+            ctx.rotate(this.displayAngle * Math.PI / 180);
+            ctx.scale(this.scaleX, this.scaleY);
             
             ctx.drawImage(this.img, -this.width / 2, -this.height / 2, this.width, this.height);
             
             ctx.restore();
 
+        } else if (this.type === "obstacle" && this.styleId && obstacleStyles[this.styleId]) {
+            ctx.save();
+            // Flip ceiling pipes (except scoreboard) so their bottoms face the ceiling
+            if (this.y <= 0 && this.styleId !== 'scoreboard') {
+                const cx = this.x + this.width / 2;
+                const cy = this.y + this.height / 2;
+                ctx.translate(cx, cy);
+                ctx.scale(1, -1);
+                ctx.translate(-cx, -cy);
+            }
+            obstacleStyles[this.styleId](ctx, this);
+            ctx.restore();
         } else {
-            // Draw for obstacles (pixelated dark green)
+            // Default obstacle draw
             ctx.fillStyle = this.color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
@@ -363,7 +1656,8 @@ function component(width, height, colorOrImgSrc, x, y, type) {
     }
     
     this.hitBottom = function() {
-        var rockbottom = myGameArea.canvas.height - this.height;
+        var hEff = this.height * (this.scaleY || 1);
+        var rockbottom = myGameArea.height - hEff;
         if (this.y > rockbottom) {
             this.y = rockbottom;
             this.gravitySpeed = 0;
@@ -371,21 +1665,35 @@ function component(width, height, colorOrImgSrc, x, y, type) {
     }
     
     this.hitTop = function() {
-        if (this.y < 0) {
+        var hEff = this.height * (this.scaleY || 1);
+        if (this.y < -hEff * 0.1) {
             this.y = 0;
             this.gravitySpeed = 0;
         }
     }
     
     this.crashWith = function(otherobj) {
-        var myleft = this.x;
-        var myright = this.x + this.width;
-        var mytop = this.y;
-        var mybottom = this.y + this.height;
-        var otherleft = otherobj.x;
-        var otherright = otherobj.x + otherobj.width;
-        var othertop = otherobj.y;
-        var otherbottom = otherobj.y + otherobj.height;
+        var myScaleX = this.scaleX || 1;
+        var myScaleY = this.scaleY || 1;
+        var myWidth = this.width * myScaleX;
+        var myHeight = this.height * myScaleY;
+        var myCenterX = this.x + this.width / 2;
+        var myCenterY = this.y + this.height / 2;
+        var myleft = myCenterX - myWidth / 2;
+        var myright = myCenterX + myWidth / 2;
+        var mytop = myCenterY - myHeight / 2;
+        var mybottom = myCenterY + myHeight / 2;
+
+        var oScaleX = otherobj.scaleX || 1;
+        var oScaleY = otherobj.scaleY || 1;
+        var oWidth = otherobj.width * oScaleX;
+        var oHeight = otherobj.height * oScaleY;
+        var oCenterX = otherobj.x + otherobj.width / 2;
+        var oCenterY = otherobj.y + otherobj.height / 2;
+        var otherleft = oCenterX - oWidth / 2;
+        var otherright = oCenterX + oWidth / 2;
+        var othertop = oCenterY - oHeight / 2;
+        var otherbottom = oCenterY + oHeight / 2;
         
         return !(mybottom < othertop || mytop > otherbottom || myright < otherleft || myleft > otherright);
     }
@@ -394,7 +1702,7 @@ function component(width, height, colorOrImgSrc, x, y, type) {
 // --- Game Loop and Logic ---
 
 function updateGameArea() {
-    if (!gameRunning) return;
+    if (!gameRunning || gamePaused) return;
 
     for (var i = 0; i < myObstacles.length; i++) {
         if (myGamePiece.crashWith(myObstacles[i])) {
@@ -403,31 +1711,71 @@ function updateGameArea() {
         }
     }
     
+    // Check coin collection
+    for (var i = myCoins.length - 1; i >= 0; i--) {
+        if (myGamePiece.crashWith(myCoins[i])) {
+            coinsCollectedThisGame++;
+            updateCoinDisplay();
+            myCoins.splice(i, 1);
+        }
+    }
+    
     myGameArea.clear();
     myGameArea.frameNo += 1;
 
     
     // Score increases every 10 frames
-let currentScore = Math.floor(myGameArea.frameNo / 5);
+    let currentScore = Math.floor(myGameArea.frameNo / 5);
 
-var obstacleSpeed = -5 - currentScore * 0.004; 
+    var sf = getScaleFactor();
+
+    // Get difficulty settings
+    var settings = difficultySettings[difficulty];
+    var obstacleSpeed = (-5 - currentScore * settings.speedMultiplier) * sf; 
 
     
     if (myGameArea.frameNo == 1 || everyinterval(150)) {
-        var x = myGameArea.canvas.width;
-        var minHeight = 20, maxHeight = 180;
-        var height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
-        var minGap = 80, maxGap = 120;
-        var gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+        var x = myGameArea.width;
+        var gap = Math.floor(Math.random() * (settings.gapMax - settings.gapMin + 1) + settings.gapMin);
+        gap = Math.max(40 * sf, gap * sf);
+        
+        // Calculate valid height range based on gap size and canvas height
+        var canvasHeight = myGameArea.height;
+        var minValidHeight = 20 * sf;
+        var maxValidHeight = canvasHeight - gap - 20 * sf;
+        
+        // Ensure the gap will fit within the canvas
+        var height = Math.floor(Math.random() * (maxValidHeight - minValidHeight + 1) + minValidHeight);
 
-        // Obstacles now also drawn using the pixel-style for consistency
-        myObstacles.push(new component(20, height, "#2e7d32", x, 0)); /* Dark green for pipes */
-        myObstacles.push(new component(20, x - height - gap, "#2e7d32", x, height + gap));
+        var obstacleStyle = getEquippedObstacleStyle();
+        var pipeColor = '#2e7d32'; // fallback color if style draw not used
+
+        // Obstacles
+        var pipeW = 24 * sf;
+        myObstacles.push(new component(pipeW, height, pipeColor, x, 0, "obstacle", obstacleStyle));
+        myObstacles.push(new component(pipeW, x - height - gap, pipeColor, x, height + gap, "obstacle", obstacleStyle));
+        
+        // Spawn basketball in gap with chance based on difficulty
+        if (Math.random() < settings.ballChance) {
+            var coinSize = 20 * sf;
+            var coinY = height + gap / 2 - coinSize / 2; // Center of gap
+            myCoins.push(new component(coinSize, coinSize, "#FF6B35", x, coinY, "coin"));
+        }
     }
     
     for (var i = 0; i < myObstacles.length; i++) {
         myObstacles[i].x += obstacleSpeed;
         myObstacles[i].update();
+    }
+    
+    // Update coins
+    for (var i = myCoins.length - 1; i >= 0; i--) {
+        myCoins[i].x += obstacleSpeed;
+        myCoins[i].update();
+        // Remove coins that went off screen
+        if (myCoins[i].x + myCoins[i].width < 0) {
+            myCoins.splice(i, 1);
+        }
     }
     
     myScore.text = "SCORE: " + Math.floor(myGameArea.frameNo / 10);
@@ -439,18 +1787,45 @@ var obstacleSpeed = -5 - currentScore * 0.004;
 
 function endGame() {
     gameRunning = false;
+    gamePaused = false;
     myGameArea.stop();
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('coinCounter').style.display = 'none';
+
+    // Add coins collected this game to total
+    totalCoins += coinsCollectedThisGame;
+    saveCoins();
+    updateCoinDisplay();
 
     const finalScore = Math.floor(myGameArea.frameNo / 10);
-    let message = `YOUR SCORE: <b>${finalScore}</b>!`;
+    let message = `YOUR SCORE: <b>${finalScore}</b>!<br>BALLS EARNED: <b style="color:#FF6B35;">${coinsCollectedThisGame}</b>`;
 
-    if (finalScore > highScore) {
-        highScore = finalScore;
-        document.getElementById("highText").innerHTML = "HIGH SCORE: <b>" + highScore + "</b>";
+    // Check if impossible mode should be unlocked
+    if (!impossibleUnlocked && difficulty === 'hard' && finalScore >= 300) {
+        impossibleUnlocked = true;
+        try { localStorage.setItem('lb_impossible_unlocked', 'true'); } catch(e) {}
+        
+        // Add impossible option to dropdown
+        addImpossibleToSelector();
+        
+        message += "<br><br>🎉 IMPOSSIBLE MODE UNLOCKED! 🎉";
+    }
+
+    // Get the appropriate high score key (impossible shares with hard)
+    var scoreKey = difficulty === 'impossible' ? 'hard' : difficulty;
+    var currentHigh = highScores[scoreKey];
+
+    if (finalScore > currentHigh) {
+        highScores[scoreKey] = finalScore;
+        updateHighScoreDisplay();
         message += "<br>NEW HIGH SCORE!";
-        try { localStorage.setItem('lb_highscore', highScore); } catch(e) { console.error("Local storage error:", e); }
+        try { 
+            localStorage.setItem('lb_highscore_' + scoreKey, finalScore); 
+        } catch(e) { 
+            console.error("Local storage error:", e); 
+        }
     } else {
-        document.getElementById("highText").innerHTML = "HIGH SCORE: <b>" + highScore + "</b>";
+        updateHighScoreDisplay();
     }
     
     showMessage("YOU GOT DUNKED ON!", message);
@@ -466,8 +1841,10 @@ function everyinterval(n) {
 }
 
 function jump() {
-    if (gameRunning && myGamePiece) {
-        myGamePiece.gravitySpeed = -3.2;
+    if (gameRunning && !gamePaused && myGamePiece) {
+        var sf = getScaleFactor();
+        myGamePiece.gravitySpeed = -3.2 * sf;
+        myGamePiece.squashTimer = 140; // brief pop
     }
 }
 
@@ -476,39 +1853,277 @@ function jump() {
 document.addEventListener('keydown', function(e) {
     if (e.code === 'Space') {
         e.preventDefault();
-        jump();
+        if (gameRunning && !gamePaused) {
+            jump();
+        }
+    }
+    if (e.code === 'Escape') {
+        if (isShopOpen()) {
+            e.preventDefault();
+            closeShop();
+            return;
+        }
+        if (gameRunning) {
+            e.preventDefault();
+            if (gamePaused) {
+                resumeGame();
+            } else {
+                pauseGame();
+            }
+        }
     }
 });
 document.addEventListener('mousedown', function(e) {
-    if (gameRunning) {
+    if (gameRunning && !gamePaused) {
         e.preventDefault();
         jump();
     }
 });
 
 document.addEventListener('touchstart', function(e) {
-    if (gameRunning) {
+    // Don't jump if touching pause button or pause menu
+    if (e.target.closest('#pauseBtn') || e.target.closest('#pauseMenu')) {
+        return;
+    }
+    
+    if (gameRunning && !gamePaused) {
         e.preventDefault();
         jump();
     }
 }, {passive:false});
 
+// Shop functions
+function openShop() {
+    document.getElementById('shopMenu').style.display = 'block';
+    updateCoinDisplay();
+    renderShopItems();
+}
+
+function closeShop() {
+    document.getElementById('shopMenu').style.display = 'none';
+}
+
+function isShopOpen() {
+    var el = document.getElementById('shopMenu');
+    return el && el.style.display === 'block';
+}
+
+function renderShopItems() {
+    // Render player skins
+    var skinsContainer = document.getElementById('playerSkins');
+    skinsContainer.innerHTML = '';
+    shopItems.skins.forEach(function(item) {
+        var owned = ownedCosmetics.skins.includes(item.id);
+        var equipped = equippedCosmetics.skin === item.id;
+        var stateClass = owned ? (equipped ? 'equipped-state' : 'owned-state') : 'buy-state';
+        var btnLabel = owned ? (equipped ? 'EQUIPPED' : 'EQUIP') : 'BUY';
+        var actionAttr = '';
+        var disabledAttr = '';
+        if (!owned) {
+            actionAttr = "onclick=\"buyItem('skins', '" + item.id + "')\"";
+        } else if (!equipped) {
+            actionAttr = "onclick=\"equipItem('skin', '" + item.id + "')\"";
+        } else {
+            disabledAttr = 'disabled';
+        }
+        var itemDiv = document.createElement('div');
+        itemDiv.className = 'shop-item' + (owned ? ' owned' : '');
+        itemDiv.innerHTML = `
+            <div class="shop-item-info">
+                <div class="shop-item-name">${item.name} ${equipped ? '(EQUIPPED)' : ''}</div>
+                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' BALLS'}</div>
+            </div>
+            <button class="${stateClass}" ${actionAttr} ${disabledAttr}>
+                ${btnLabel}
+            </button>
+        `;
+        skinsContainer.appendChild(itemDiv);
+    });
+
+    // Render pipe colors
+    var pipesContainer = document.getElementById('pipeColors');
+    pipesContainer.innerHTML = '';
+    shopItems.pipes.forEach(function(item) {
+        var owned = ownedCosmetics.pipes.includes(item.id);
+        var equipped = equippedCosmetics.pipe === item.id;
+        var stateClass = owned ? (equipped ? 'equipped-state' : 'owned-state') : 'buy-state';
+        var btnLabel = owned ? (equipped ? 'EQUIPPED' : 'EQUIP') : 'BUY';
+        var actionAttr = '';
+        var disabledAttr = '';
+        if (!owned) {
+            actionAttr = "onclick=\"buyItem('pipes', '" + item.id + "')\"";
+        } else if (!equipped) {
+            actionAttr = "onclick=\"equipItem('pipe', '" + item.id + "')\"";
+        } else {
+            disabledAttr = 'disabled';
+        }
+        var itemDiv = document.createElement('div');
+        itemDiv.className = 'shop-item' + (owned ? ' owned' : '');
+        itemDiv.innerHTML = `
+            <div class="shop-item-info">
+                <div class="shop-item-name">${item.name} ${equipped ? '(EQUIPPED)' : ''}</div>
+                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' BALLS'}</div>
+            </div>
+            <button class="${stateClass}" ${actionAttr} ${disabledAttr}>
+                ${btnLabel}
+            </button>
+        `;
+        pipesContainer.appendChild(itemDiv);
+    });
+
+    // Render backgrounds
+    var backgroundsContainer = document.getElementById('backgrounds');
+    backgroundsContainer.innerHTML = '';
+    shopItems.backgrounds.forEach(function(item) {
+        var owned = ownedCosmetics.backgrounds.includes(item.id);
+        var equipped = equippedCosmetics.background === item.id;
+        var stateClass = owned ? (equipped ? 'equipped-state' : 'owned-state') : 'buy-state';
+        var btnLabel = owned ? (equipped ? 'EQUIPPED' : 'EQUIP') : 'BUY';
+        var actionAttr = '';
+        var disabledAttr = '';
+        if (!owned) {
+            actionAttr = "onclick=\"buyItem('backgrounds', '" + item.id + "')\"";
+        } else if (!equipped) {
+            actionAttr = "onclick=\"equipItem('background', '" + item.id + "')\"";
+        } else {
+            disabledAttr = 'disabled';
+        }
+        var itemDiv = document.createElement('div');
+        itemDiv.className = 'shop-item' + (owned ? ' owned' : '');
+        itemDiv.innerHTML = `
+            <div class="shop-item-info">
+                <div class="shop-item-name">${item.name} ${equipped ? '(EQUIPPED)' : ''}</div>
+                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' BALLS'}</div>
+            </div>
+            <button class="${stateClass}" ${actionAttr} ${disabledAttr}>
+                ${btnLabel}
+            </button>
+        `;
+        backgroundsContainer.appendChild(itemDiv);
+    });
+}
+
+function buyItem(category, itemId) {
+    var item = shopItems[category].find(i => i.id === itemId);
+    if (!item) return;
+    
+    if (totalCoins >= item.price) {
+        totalCoins -= item.price;
+        ownedCosmetics[category].push(itemId);
+        saveCoins();
+        updateCoinDisplay();
+        renderShopItems();
+    } else {
+        alert('NOT ENOUGH BALLS!');
+    }
+}
+
+function equipItem(slot, itemId) {
+    equippedCosmetics[slot] = itemId;
+    if (slot === 'background') {
+        loadBackgroundImage();
+    }
+    // If skin is changed while playing, update sprite and scale immediately
+    if (slot === 'skin' && myGamePiece) {
+        var sf = getScaleFactor();
+        myGamePiece.width = 40 * sf;
+        myGamePiece.height = 30 * sf;
+        myGamePiece.gravity = 0.15 * sf;
+        var newImg = new Image();
+        newImg.src = getEquippedSkinImage();
+        newImg.onload = function() {
+            myGamePiece.img = newImg;
+            myGamePiece.loaded = true;
+        };
+    }
+    saveCoins();
+    renderShopItems();
+}
+
 // --- Initial Setup (Load High Score) ---
 document.addEventListener('DOMContentLoaded', function() {
+    loadCoins(); // Load coins first
+    loadBackgroundImage();
+
+    // Ensure initial state shows the main menu and hides shop
+    var shopMenuEl = document.getElementById('shopMenu');
+    if (shopMenuEl) shopMenuEl.style.display = 'none';
+    var menuEl = document.getElementById('menu');
+    if (menuEl) menuEl.style.display = 'block';
+    var pauseBtnEl = document.getElementById('pauseBtn');
+    if (pauseBtnEl) pauseBtnEl.style.display = 'none';
+    
     var btn = document.getElementById('startBtn');
     if (btn) {
         btn.addEventListener('click', startGameFromMenu);
         btn.addEventListener('touchstart', function(e){ e.preventDefault(); startGameFromMenu(); }, {passive:false});
     }
+    
+    // Shop button
+    var shopBtn = document.getElementById('shopBtn');
+    if (shopBtn) {
+        shopBtn.addEventListener('click', openShop);
+        shopBtn.addEventListener('touchstart', function(e){ e.preventDefault(); openShop(); }, {passive:false});
+    }
+    
+    // Shop close button
+    var shopCloseBtn = document.getElementById('shopCloseBtn');
+    if (shopCloseBtn) {
+        shopCloseBtn.addEventListener('click', closeShop);
+        shopCloseBtn.addEventListener('touchstart', function(e){ e.preventDefault(); closeShop(); }, {passive:false});
+    }
+    
+    // Pause button
+    var pauseBtn = document.getElementById('pauseBtn');
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', pauseGame);
+        pauseBtn.addEventListener('touchstart', function(e){ e.preventDefault(); pauseGame(); }, {passive:false});
+    }
+    
+    // Resume button
+    var resumeBtn = document.getElementById('resumeBtn');
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', resumeGame);
+        resumeBtn.addEventListener('touchstart', function(e){ e.preventDefault(); resumeGame(); }, {passive:false});
+    }
+    
+    // Quit button
+    var quitBtn = document.getElementById('quitBtn');
+    if (quitBtn) {
+        quitBtn.addEventListener('click', quitToMenu);
+        quitBtn.addEventListener('touchstart', function(e){ e.preventDefault(); quitToMenu(); }, {passive:false});
+    }
 
+    // Difficulty selector dropdown
+    var difficultySelect = document.getElementById('difficultySelect');
+    if (difficultySelect) {
+        difficultySelect.addEventListener('change', function() {
+            difficulty = this.value;
+            updateHighScoreDisplay(); // Update display when difficulty changes
+        });
+    }
+
+    // Check if impossible mode was previously unlocked
     try {
-        var saved = parseInt(localStorage.getItem('lb_highscore')) || 0;
-        if (saved > 0) {
-            highScore = saved;
-            document.getElementById('highText').innerHTML = 'HIGH SCORE: <b>' + highScore + '</b>';
+        var impossibleSaved = localStorage.getItem('lb_impossible_unlocked');
+        console.log('Impossible saved in localStorage:', impossibleSaved);
+        if (impossibleSaved === 'true') {
+            impossibleUnlocked = true;
+            console.log('Calling addImpossibleToSelector()');
+            addImpossibleToSelector();
         }
+    } catch(e) { console.error('Error checking impossible unlock:', e); }
+
+    // Load high scores for each difficulty
+    try {
+        highScores.easy = parseInt(localStorage.getItem('lb_highscore_easy')) || 0;
+        highScores.normal = parseInt(localStorage.getItem('lb_highscore_normal')) || 0;
+        highScores.hard = parseInt(localStorage.getItem('lb_highscore_hard')) || 0;
+        
+        // Display the current difficulty's high score
+        updateHighScoreDisplay();
     } catch(e) {
-        console.warn("Could not access localStorage for high score.");
+        console.warn("Could not access localStorage for high scores.");
     }
 });
 
