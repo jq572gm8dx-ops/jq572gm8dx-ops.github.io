@@ -305,7 +305,7 @@
         /* Right action buttons */
         .btn-punch { bottom: 120px; right: 120px; width: 60px; height: 60px; }
         .btn-kick { bottom: 70px; right: 50px; width: 60px; height: 60px; }
-        .btn-special { bottom: 20px; right: 120px; width: 60px; height: 60px; }
+        .btn-block { bottom: 20px; right: 120px; width: 60px; height: 60px; }
 
         .shop-grid {
             display: grid;
@@ -457,7 +457,7 @@
             
             .btn-punch { bottom: 110px; right: 100px; width: 50px; height: 50px; font-size: 1rem; }
             .btn-kick { bottom: 65px; right: 40px; width: 50px; height: 50px; font-size: 1rem; }
-            .btn-special { bottom: 20px; right: 100px; width: 50px; height: 50px; font-size: 1rem; }
+            .btn-block { bottom: 20px; right: 100px; width: 50px; height: 50px; font-size: 1rem; }
         }
     </style>
 </head>
@@ -634,7 +634,7 @@
                         D - Move Right<br>
                         F - Punch<br>
                         G - Kick<br>
-                        H - Special Move
+                        H - Block
                     </div>
                     <div>
                         <div class="player-label">PLAYER 2 (HEAT):</div>
@@ -644,7 +644,7 @@
                         → - Move Right<br>
                         J - Punch<br>
                         K - Kick<br>
-                        L - Special Move
+                        L - Block
                     </div>
                 </div>
             </div>
@@ -679,7 +679,7 @@
             <!-- Action Buttons -->
             <div class="touch-button btn-punch" data-action="punch">F</div>
             <div class="touch-button btn-kick" data-action="kick">G</div>
-            <div class="touch-button btn-special" data-action="special">H</div>
+            <div class="touch-button btn-block" data-action="block">B</div>
         </div>
     </div>
 
@@ -870,11 +870,11 @@
                 if (this.hitStun > 0 || this.state === 'attacking') return;
                 
                 const controls = this.isPlayer1 ? 
-                    { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', punch: 'KeyF', kick: 'KeyG', special: 'KeyH' } :
-                    { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', punch: 'KeyJ', kick: 'KeyK', special: 'KeyL' };
+                    { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', punch: 'KeyF', kick: 'KeyG', block: 'KeyH' } :
+                    { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', punch: 'KeyJ', kick: 'KeyK', block: 'KeyL' };
                 
                 // Block
-                this.isBlocking = keys[controls.down] && this.y >= GROUND_Y;
+                this.isBlocking = (keys[controls.down] || keys[controls.block]) && this.y >= GROUND_Y;
                 if (this.isBlocking) {
                     this.state = 'blocking';
                     return;
@@ -903,8 +903,6 @@
                         this.attack('punch');
                     } else if (keys[controls.kick]) {
                         this.attack('kick');
-                    } else if (keys[controls.special]) {
-                        this.attack('special');
                     }
                 }
             }
@@ -1715,10 +1713,9 @@
                     'left': 'KeyA',
                     'right': 'KeyD',
                     'jump': 'KeyW',
-                    'block': 'KeyS',
+                    'block': 'KeyH',
                     'punch': 'KeyF',
-                    'kick': 'KeyG',
-                    'special': 'KeyH'
+                    'kick': 'KeyG'
                 };
                 
                 const keyCode = keyMap[action];
