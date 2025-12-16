@@ -760,11 +760,24 @@
                     document.getElementById('pacplaysStat').textContent = `${pacHours}h ${pacMins}m`;
                 }
 
+                // LeBron Fighter stats
+                const fighterData = localStorage.getItem('lebronfighterGameData');
+                let fighterPlaytime = 0;
+                if (fighterData) {
+                    const data = JSON.parse(fighterData);
+                    
+                    // Get playtime in minutes (stored or estimated)
+                    fighterPlaytime = data.playtime || (data.gamesPlayed || 0) * 2;
+                    const fighterHours = Math.floor(fighterPlaytime / 60);
+                    const fighterMins = fighterPlaytime % 60;
+                    document.getElementById('fighterplaysStat').textContent = `${fighterHours}h ${fighterMins}m`;
+                }
+
                 // Overall stats
                 const totalStats = {
-                    gamesPlayed: (flappyData ? JSON.parse(flappyData).gamesPlayed || 0 : 0) + (pacData ? JSON.parse(pacData).gamesPlayed || 0 : 0),
-                    bestScore: Math.max(flappyData ? JSON.parse(flappyData).score || 0 : 0, pacData ? JSON.parse(pacData).score || 0 : 0),
-                    coinsEarned: (flappyData ? JSON.parse(flappyData).coins || 0 : 0) + (pacData ? JSON.parse(pacData).coins || 0 : 0)
+                    gamesPlayed: (flappyData ? JSON.parse(flappyData).gamesPlayed || 0 : 0) + (pacData ? JSON.parse(pacData).gamesPlayed || 0 : 0) + (fighterData ? JSON.parse(fighterData).gamesPlayed || 0 : 0),
+                    bestScore: Math.max(flappyData ? JSON.parse(flappyData).score || 0 : 0, pacData ? JSON.parse(pacData).score || 0 : 0, fighterData ? JSON.parse(fighterData).score || 0 : 0),
+                    coinsEarned: (flappyData ? JSON.parse(flappyData).coins || 0 : 0) + (pacData ? JSON.parse(pacData).coins || 0 : 0) + (fighterData ? JSON.parse(fighterData).coins || 0 : 0)
                 };
 
                 document.getElementById('totalGamesPlayed').textContent = totalStats.gamesPlayed;
@@ -772,7 +785,7 @@
                 document.getElementById('coinsEarned').textContent = totalStats.coinsEarned;
 
                 // Calculate total playtime
-                const totalMinutes = flappyPlaytime + pacPlaytime;
+                const totalMinutes = flappyPlaytime + pacPlaytime + fighterPlaytime;
                 const totalHours = Math.floor(totalMinutes / 60);
                 const remainingMins = totalMinutes % 60;
                 document.getElementById('totalPlaytime').textContent = `${totalHours}h ${remainingMins}m`;

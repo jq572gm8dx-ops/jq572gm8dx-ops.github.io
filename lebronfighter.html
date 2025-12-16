@@ -480,6 +480,24 @@
         const AI_PUNCH_CHANCE = 0.02;
         const AI_KICK_CHANCE = 0.01;
         const AI_SPECIAL_CHANCE = 0.005;
+        
+        // Key mappings
+        const KEYS = {
+            P1_JUMP: 'w',
+            P1_LEFT: 'a',
+            P1_BLOCK: 's',
+            P1_RIGHT: 'd',
+            P1_PUNCH: 'f',
+            P1_KICK: 'g',
+            P1_SPECIAL: 'h',
+            P2_JUMP: 'arrowup',
+            P2_LEFT: 'arrowleft',
+            P2_BLOCK: 'arrowdown',
+            P2_RIGHT: 'arrowright',
+            P2_PUNCH: 'j',
+            P2_KICK: 'k',
+            P2_SPECIAL: 'l'
+        };
 
         // Game state
         let gameState = 'start'; // start, playing, roundEnd, gameEnd
@@ -832,21 +850,23 @@
             keys[e.key.toLowerCase()] = true;
             
             if (gameState === 'playing') {
+                const key = e.key.toLowerCase();
+                
                 // Player 1 controls
-                if (e.key.toLowerCase() === 'w') player1.jump();
-                if (e.key.toLowerCase() === 'f') player1.punch();
-                if (e.key.toLowerCase() === 'g') player1.kick();
-                if (e.key.toLowerCase() === 'h') {
+                if (key === KEYS.P1_JUMP) player1.jump();
+                if (key === KEYS.P1_PUNCH) player1.punch();
+                if (key === KEYS.P1_KICK) player1.kick();
+                if (key === KEYS.P1_SPECIAL) {
                     if (player1.special >= SPECIAL_MAX) player1.ultimateMove();
                     else player1.specialMove();
                 }
                 
                 // Player 2 controls
                 if (gameMode === '2P') {
-                    if (e.key === 'ArrowUp') player2.jump();
-                    if (e.key.toLowerCase() === 'j') player2.punch();
-                    if (e.key.toLowerCase() === 'k') player2.kick();
-                    if (e.key.toLowerCase() === 'l') {
+                    if (key === KEYS.P2_JUMP) player2.jump();
+                    if (key === KEYS.P2_PUNCH) player2.punch();
+                    if (key === KEYS.P2_KICK) player2.kick();
+                    if (key === KEYS.P2_SPECIAL) {
                         if (player2.special >= SPECIAL_MAX) player2.ultimateMove();
                         else player2.specialMove();
                     }
@@ -956,15 +976,15 @@
             }
             
             // Handle continuous movement (keyboard + touch)
-            if (keys['a'] || touchState.left) player1.moveLeft();
-            if (keys['d'] || touchState.right) player1.moveRight();
-            if (keys['s'] || touchState.block) player1.block();
+            if (keys[KEYS.P1_LEFT] || touchState.left) player1.moveLeft();
+            if (keys[KEYS.P1_RIGHT] || touchState.right) player1.moveRight();
+            if (keys[KEYS.P1_BLOCK] || touchState.block) player1.block();
             else player1.stopBlock();
             
             if (gameMode === '2P') {
-                if (keys['arrowleft']) player2.moveLeft();
-                if (keys['arrowright']) player2.moveRight();
-                if (keys['arrowdown']) player2.block();
+                if (keys[KEYS.P2_LEFT]) player2.moveLeft();
+                if (keys[KEYS.P2_RIGHT]) player2.moveRight();
+                if (keys[KEYS.P2_BLOCK]) player2.block();
                 else player2.stopBlock();
             } else {
                 // Simple AI for CPU
@@ -1246,7 +1266,21 @@
             
             // Submit score to leaderboard
             if (typeof submitScoreToLeaderboard === 'function') {
-                submitScoreToLeaderboard('LeBronFighter', score, gameMode);
+                submitScoreToLeaderboard('LeBronFighter', score, 'normal');
+            }
+            
+            // Save to localStorage
+            try {
+                const existingData = localStorage.getItem('lebronfighterGameData');
+                const data = existingData ? JSON.parse(existingData) : { gamesPlayed: 0, score: 0, playtime: 0 };
+                
+                data.gamesPlayed = (data.gamesPlayed || 0) + 1;
+                data.score = Math.max(data.score || 0, score);
+                data.playtime = (data.playtime || 0) + 2; // Estimate 2 minutes per game
+                
+                localStorage.setItem('lebronfighterGameData', JSON.stringify(data));
+            } catch (e) {
+                console.log('Could not save game data:', e);
             }
         }
 
