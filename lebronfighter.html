@@ -1625,8 +1625,8 @@
         }
         
         function updateShopItem(type, level) {
-            const costs = [0, 50, 100, 200, 400, 800]; // Cost for each level (index 0 unused)
-            const nextCost = level < 5 ? costs[level + 1] : 0;
+            const costs = [0, 50, 100, 200, 400, 800]; // Cost for each upgrade level
+            const nextCost = level < 5 ? costs[level] : 0;
             
             document.getElementById(`${type}Level`).textContent = level;
             document.getElementById(`${type}Cost`).textContent = nextCost;
@@ -1690,7 +1690,7 @@
             
             if (currentLevel >= 5) return; // Max level
             
-            const cost = costs[currentLevel + 1];
+            const cost = costs[currentLevel];
             if (playerData.coins >= cost) {
                 playerData.coins -= cost;
                 playerData[`${type}Level`]++;
