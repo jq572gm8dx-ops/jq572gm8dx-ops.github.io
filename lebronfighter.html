@@ -6,7 +6,7 @@
     <title>LeBron Fighter - The King's Court</title>
     <link rel="icon" type="image/png" href="coolbrongames.png">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <!-- Firebase (Local) -->
+    <!-- Firebase (Local) - Scripts served from repository, not CDN -->
     <script src="firebase-app-compat.js"></script>
     <script src="firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
@@ -480,6 +480,8 @@
         const AI_PUNCH_CHANCE = 0.02;
         const AI_KICK_CHANCE = 0.01;
         const AI_SPECIAL_CHANCE = 0.005;
+        const DOUBLE_TAP_THRESHOLD = 300; // milliseconds
+        const ESTIMATED_GAME_DURATION_MINUTES = 2;
         
         // Key mappings
         const KEYS = {
@@ -1265,8 +1267,12 @@
             document.getElementById('endScreen').classList.remove('hidden');
             
             // Submit score to leaderboard
-            if (typeof submitScoreToLeaderboard === 'function') {
-                submitScoreToLeaderboard('LeBronFighter', score, 'normal');
+            try {
+                if (typeof submitScoreToLeaderboard === 'function') {
+                    submitScoreToLeaderboard('LeBronFighter', score, 'normal');
+                }
+            } catch (e) {
+                console.log('Could not submit score to leaderboard:', e);
             }
             
             // Save to localStorage
@@ -1276,7 +1282,7 @@
                 
                 data.gamesPlayed = (data.gamesPlayed || 0) + 1;
                 data.score = Math.max(data.score || 0, score);
-                data.playtime = (data.playtime || 0) + 2; // Estimate 2 minutes per game
+                data.playtime = (data.playtime || 0) + ESTIMATED_GAME_DURATION_MINUTES;
                 
                 localStorage.setItem('lebronfighterGameData', JSON.stringify(data));
             } catch (e) {
@@ -1306,7 +1312,7 @@
         let lastTouchEnd = 0;
         document.addEventListener('touchend', (e) => {
             const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
+            if (now - lastTouchEnd <= DOUBLE_TAP_THRESHOLD) {
                 e.preventDefault();
             }
             lastTouchEnd = now;
