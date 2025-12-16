@@ -686,725 +686,245 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-
-        // Game constants
-        const GRAVITY = 0.8;
-        const JUMP_FORCE = -15;
-        const MOVE_SPEED = 5;
-        const GROUND_Y = canvas.height - 100;
-        const MAX_HEALTH = 100;
-        const ROUND_TIME = 90;
-        const SPECIAL_MAX = 100;
-        const FRICTION = 0.85;
-        const PROJECTILE_GRAVITY = 0.3;
-        const BLOCK_DAMAGE_REDUCTION = 0.3;
-        const AI_PUNCH_CHANCE = 0.02;
-        const AI_KICK_CHANCE = 0.01;
-        const AI_SPECIAL_CHANCE = 0.005;
-        const DOUBLE_TAP_THRESHOLD = 300; // milliseconds
-        const ESTIMATED_GAME_DURATION_MINUTES = 2;
         
-        // Key mappings
-        const KEYS = {
-            P1_JUMP: 'w',
-            P1_LEFT: 'a',
-            P1_BLOCK: 's',
-            P1_RIGHT: 'd',
-            P1_PUNCH: 'f',
-            P1_KICK: 'g',
-            P1_SPECIAL: 'h',
-            P2_JUMP: 'arrowup',
-            P2_LEFT: 'arrowleft',
-            P2_BLOCK: 'arrowdown',
-            P2_RIGHT: 'arrowright',
-            P2_PUNCH: 'j',
-            P2_KICK: 'k',
-            P2_SPECIAL: 'l'
-        };
+        // Set canvas size
+        canvas.width = 1200;
+        canvas.height = 600;
 
         // Game state
-        let gameState = 'mainMenu'; // mainMenu, levelSelect, shop, start, playing, roundEnd, gameEnd
-        let gameMode = '1P'; // 1P or 2P
-        let currentRound = 1;
-        let roundTime = ROUND_TIME;
-        let roundStartTime = 0;
-        let comboCounter = 0;
-        let comboTimer = 0;
-        let currentLevel = 1;
-        let maxUnlockedLevel = 1;
-        
-        // Player progression system
-        let playerData = {
-            coins: 0,
-            attackLevel: 1,
-            healthLevel: 1,
-            speedLevel: 1,
-            specialLevel: 1,
-            maxUnlockedLevel: 1
-        };
-        
-        // Level difficulty multipliers
-        const LEVEL_CONFIG = {
-            1: { name: 'Easy', aiSpeed: 0.7, aiAggression: 0.5, coinsReward: 50 },
-            2: { name: 'Medium', aiSpeed: 0.85, aiAggression: 0.7, coinsReward: 75 },
-            3: { name: 'Hard', aiSpeed: 1.0, aiAggression: 0.85, coinsReward: 100 },
-            4: { name: 'Very Hard', aiSpeed: 1.2, aiAggression: 1.0, coinsReward: 150 },
-            5: { name: 'Expert', aiSpeed: 1.4, aiAggression: 1.2, coinsReward: 200 },
-            6: { name: 'Master', aiSpeed: 1.6, aiAggression: 1.5, coinsReward: 300 }
+        let gameState = 'start';
+        let score = 0;
+        let level = 1;
+        let enemies = [];
+        let particles = [];
+        let basketballs = [];
+
+        // Player object (LeBron)
+        const player = {
+            x: 100,
+            y: 400,
+            width: 60,
+            height: 80,
+            speed: 5,
+            jumpPower: 15,
+            velocityY: 0,
+            gravity: 0.8,
+            isJumping: false,
+            health: 100,
+            attackCooldown: 0,
+            direction: 1
         };
 
-        // Player class
-        class Player {
-            constructor(x, isPlayer1) {
+        // Input handling
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.code] = true);
+        document.addEventListener('keyup', (e) => keys[e.code] = false);
+
+        // Enemy class
+        class Enemy {
+            constructor(x, y, type) {
                 this.x = x;
-                this.y = GROUND_Y;
-                this.width = 60;
-                this.height = 100;
-                this.velocityY = 0;
-                this.velocityX = 0;
-                this.health = MAX_HEALTH;
-                this.special = 0;
-                this.wins = 0;
-                this.isPlayer1 = isPlayer1;
-                this.facing = isPlayer1 ? 1 : -1; // 1 = right, -1 = left
-                
-                // States
-                this.state = 'idle'; // idle, walking, jumping, attacking, blocking, hit, ko
-                this.isGrounded = true;
-                this.isBlocking = false;
-                this.isAttacking = false;
-                this.attackTimer = 0;
-                this.hitStunTimer = 0;
-                this.invulnerable = false;
-                
-                // Colors
-                this.primaryColor = isPlayer1 ? '#552583' : '#98002e'; // Lakers purple or Heat red
-                this.secondaryColor = isPlayer1 ? '#fdb927' : '#000000'; // Lakers gold or black
-                
-                // Attack hitbox
-                this.attackHitbox = { x: 0, y: 0, width: 0, height: 0, active: false, damage: 0 };
-                
-                // Projectile
-                this.projectile = null;
+                this.y = y;
+                this.width = 50;
+                this.height = 70;
+                this.speed = 2 + Math.random() * 2;
+                this.health = 50 + (level * 10);
+                this.type = type || 'normal';
+                this.direction = -1;
+                this.attackCooldown = 0;
             }
 
             update() {
-                // Update timers
-                if (this.attackTimer > 0) this.attackTimer--;
-                if (this.hitStunTimer > 0) this.hitStunTimer--;
-                if (this.attackTimer === 0) {
-                    this.isAttacking = false;
-                    this.attackHitbox.active = false;
+                // Move towards player
+                if (this.x > player.x + 100) {
+                    this.x -= this.speed;
+                    this.direction = -1;
+                } else if (this.x < player.x - 100) {
+                    this.x += this.speed;
+                    this.direction = 1;
                 }
-                if (this.hitStunTimer === 0 && this.state === 'hit') {
-                    this.state = 'idle';
-                }
-                
-                // Apply gravity
-                if (!this.isGrounded) {
-                    this.velocityY += GRAVITY;
-                }
-                
-                // Update position
-                this.y += this.velocityY;
-                this.x += this.velocityX;
-                
-                // Ground collision
-                if (this.y >= GROUND_Y) {
-                    this.y = GROUND_Y;
-                    this.velocityY = 0;
-                    this.isGrounded = true;
-                    if (this.state === 'jumping') this.state = 'idle';
-                } else {
-                    this.isGrounded = false;
-                }
-                
-                // Keep in bounds
-                if (this.x < 50) this.x = 50;
-                if (this.x > canvas.width - this.width - 50) this.x = canvas.width - this.width - 50;
-                
-                // Decay velocity
-                this.velocityX *= FRICTION;
-                
-                // Update projectile
-                if (this.projectile) {
-                    this.projectile.x += this.projectile.velocityX;
-                    this.projectile.y += this.projectile.velocityY;
-                    this.projectile.velocityY += PROJECTILE_GRAVITY; // Gravity on projectile
-                    
-                    // Remove if out of bounds
-                    if (this.projectile.x < 0 || this.projectile.x > canvas.width || 
-                        this.projectile.y > GROUND_Y + 50) {
-                        this.projectile = null;
-                    }
+
+                // Attack logic
+                this.attackCooldown--;
+                if (Math.abs(this.x - player.x) < 80 && this.attackCooldown <= 0) {
+                    this.attack();
+                    this.attackCooldown = 60;
                 }
             }
 
-            jump() {
-                if (this.isGrounded && this.state !== 'hit' && this.state !== 'attacking') {
-                    this.velocityY = JUMP_FORCE;
-                    this.state = 'jumping';
-                    this.isGrounded = false;
-                }
-            }
-
-            moveLeft() {
-                if (this.state !== 'hit' && this.state !== 'attacking') {
-                    const speedMultiplier = this.isPlayer1 ? (1 + playerData.speedLevel * 0.1) : 1;
-                    this.velocityX = -MOVE_SPEED * speedMultiplier;
-                    this.facing = -1;
-                    if (this.isGrounded) this.state = 'walking';
-                }
-            }
-
-            moveRight() {
-                if (this.state !== 'hit' && this.state !== 'attacking') {
-                    const speedMultiplier = this.isPlayer1 ? (1 + playerData.speedLevel * 0.1) : 1;
-                    this.velocityX = MOVE_SPEED * speedMultiplier;
-                    this.facing = 1;
-                    if (this.isGrounded) this.state = 'walking';
-                }
-            }
-
-            block() {
-                if (this.state !== 'hit' && this.state !== 'attacking' && this.isGrounded) {
-                    this.isBlocking = true;
-                }
-            }
-
-            stopBlock() {
-                this.isBlocking = false;
-            }
-
-            punch() {
-                if (!this.isAttacking && this.state !== 'hit' && this.isGrounded) {
-                    const attackBoost = this.isPlayer1 ? playerData.attackLevel : 1;
-                    const speedBoost = this.isPlayer1 ? playerData.speedLevel : 1;
-                    this.isAttacking = true;
-                    this.state = 'attacking';
-                    this.attackTimer = Math.max(10, 15 - speedBoost);
-                    this.attackHitbox = {
-                        x: this.x + (this.facing > 0 ? this.width : -40),
-                        y: this.y + 20,
-                        width: 40,
-                        height: 30,
-                        active: true,
-                        damage: 5 * attackBoost,
-                        type: 'punch'
-                    };
-                }
-            }
-
-            kick() {
-                if (!this.isAttacking && this.state !== 'hit' && this.isGrounded) {
-                    const attackBoost = this.isPlayer1 ? playerData.attackLevel : 1;
-                    const speedBoost = this.isPlayer1 ? playerData.speedLevel : 1;
-                    this.isAttacking = true;
-                    this.state = 'attacking';
-                    this.attackTimer = Math.max(12, 20 - speedBoost * 2);
-                    this.attackHitbox = {
-                        x: this.x + (this.facing > 0 ? this.width : -50),
-                        y: this.y + 50,
-                        width: 50,
-                        height: 30,
-                        active: true,
-                        damage: 8 * attackBoost,
-                        type: 'kick'
-                    };
-                }
-            }
-
-            specialMove() {
-                if (!this.isAttacking && this.state !== 'hit' && this.special >= 30 && !this.projectile) {
-                    const specialBoost = this.isPlayer1 ? playerData.specialLevel : 1;
-                    const speedBoost = this.isPlayer1 ? playerData.speedLevel : 1;
-                    this.special -= 30;
-                    this.isAttacking = true;
-                    this.state = 'attacking';
-                    this.attackTimer = Math.max(15, 25 - speedBoost * 2);
-                    
-                    // Create projectile (Heat Check - Basketball)
-                    this.projectile = {
-                        x: this.x + this.width / 2,
-                        y: this.y + 30,
-                        velocityX: this.facing * (8 + speedBoost * 0.5),
-                        velocityY: -5,
-                        size: 20,
-                        damage: 15 * specialBoost
-                    };
-                }
-            }
-
-            ultimateMove() {
-                if (!this.isAttacking && this.state !== 'hit' && this.special >= SPECIAL_MAX) {
-                    const specialBoost = this.isPlayer1 ? playerData.specialLevel : 1;
-                    this.special = 0;
-                    this.isAttacking = true;
-                    this.state = 'attacking';
-                    this.attackTimer = 40;
-                    
-                    // Create powerful hitbox (The Decision)
-                    this.attackHitbox = {
-                        x: this.x + (this.facing > 0 ? this.width : -80),
-                        y: this.y,
-                        width: 80,
-                        height: 100,
-                        active: true,
-                        damage: 25 * specialBoost,
-                        type: 'ultimate'
-                    };
-                    
-                    // Screen shake effect
-                    screenShake(15);
-                }
-            }
-
-            takeDamage(damage, attackType) {
-                if (this.invulnerable || this.health <= 0) return;
-                
-                let actualDamage = damage;
-                
-                if (this.isBlocking) {
-                    actualDamage *= BLOCK_DAMAGE_REDUCTION; // Reduce damage when blocking
-                } else {
-                    this.hitStunTimer = 20;
-                    this.state = 'hit';
-                    this.velocityX = -this.facing * 3; // Knockback
-                }
-                
-                this.health -= actualDamage;
-                if (this.health < 0) this.health = 0;
-                
-                // Add to opponent's special meter
-                const opponent = this.isPlayer1 ? player2 : player1;
-                opponent.special = Math.min(opponent.special + damage * 0.5, SPECIAL_MAX);
-                
-                // Screen effects
-                if (attackType === 'ultimate') {
-                    screenShake(10);
-                } else {
-                    screenShake(5);
-                }
-                flashScreen();
-                
-                // Combo system
-                comboCounter++;
-                comboTimer = 60;
-                
-                // Check for KO
-                if (this.health <= 0) {
-                    this.state = 'ko';
+            attack() {
+                if (Math.abs(this.x - player.x) < 80 && Math.abs(this.y - player.y) < 100) {
+                    player.health -= 5;
+                    createParticles(player.x, player.y, '#ff0000');
                 }
             }
 
             draw() {
-                ctx.save();
-                
-                // Draw character body
-                ctx.fillStyle = this.primaryColor;
+                // Draw enemy (rival player)
+                ctx.fillStyle = this.type === 'boss' ? '#ff0000' : '#00ff00';
                 ctx.fillRect(this.x, this.y, this.width, this.height);
                 
-                // Draw details (jersey number, crown, etc.)
-                ctx.fillStyle = this.secondaryColor;
-                ctx.fillRect(this.x + 15, this.y + 10, 30, 40); // Jersey
-                
-                // Draw number (23)
-                ctx.fillStyle = this.isPlayer1 ? '#552583' : '#fff';
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('23', this.x + this.width / 2, this.y + 35);
-                
-                // Draw crown
-                ctx.fillStyle = '#fdb927';
-                ctx.fillRect(this.x + 15, this.y - 15, 30, 10);
-                ctx.fillRect(this.x + 20, this.y - 20, 5, 5);
-                ctx.fillRect(this.x + 27, this.y - 25, 5, 10);
-                ctx.fillRect(this.x + 35, this.y - 20, 5, 5);
-                
-                // Draw legs
-                ctx.fillStyle = this.primaryColor;
-                ctx.fillRect(this.x + 10, this.y + 50, 15, 50);
-                ctx.fillRect(this.x + 35, this.y + 50, 15, 50);
-                
-                // Draw arms
-                if (this.isAttacking && this.attackTimer > 10) {
-                    // Extended arm for attack
-                    ctx.fillRect(this.x + (this.facing > 0 ? this.width : -30), this.y + 20, 30, 15);
-                } else {
-                    ctx.fillRect(this.x + 5, this.y + 20, 15, 40);
-                    ctx.fillRect(this.x + 40, this.y + 20, 15, 40);
-                }
-                
-                // Draw blocking indicator
-                if (this.isBlocking) {
-                    ctx.strokeStyle = '#fdb927';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
-                }
-                
-                // Draw hit flash
-                if (this.hitStunTimer > 0 && Math.floor(this.hitStunTimer / 3) % 2 === 0) {
-                    ctx.globalAlpha = 0.5;
-                    ctx.fillStyle = '#fff';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    ctx.globalAlpha = 1;
-                }
-                
-                // Draw projectile
-                if (this.projectile) {
-                    ctx.fillStyle = '#ff6600';
-                    ctx.beginPath();
-                    ctx.arc(this.projectile.x, this.projectile.y, this.projectile.size / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Basketball lines
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(this.projectile.x, this.projectile.y, this.projectile.size / 2, 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-                
-                ctx.restore();
-            }
+                // Draw head
+                ctx.fillStyle = '#ffdbac';
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, this.y - 10, 15, 0, Math.PI * 2);
+                ctx.fill();
 
-            reset() {
-                this.x = this.isPlayer1 ? 200 : canvas.width - 200;
-                this.y = GROUND_Y;
-                this.velocityX = 0;
-                this.velocityY = 0;
-                // Apply health upgrade for player 1
-                const healthBoost = this.isPlayer1 ? playerData.healthLevel : 1;
-                this.health = MAX_HEALTH * healthBoost;
-                this.maxHealth = MAX_HEALTH * healthBoost;
-                this.special = 0;
-                this.state = 'idle';
-                this.isGrounded = true;
-                this.isBlocking = false;
-                this.isAttacking = false;
-                this.attackTimer = 0;
-                this.hitStunTimer = 0;
-                this.invulnerable = false;
-                this.projectile = null;
-                this.facing = this.isPlayer1 ? 1 : -1;
+                // Health bar
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(this.x, this.y - 20, this.width, 5);
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(this.x, this.y - 20, this.width * (this.health / (50 + level * 10)), 5);
             }
         }
 
-        // Initialize players
-        let player1 = new Player(200, true);
-        let player2 = new Player(canvas.width - 200, false);
+        // Basketball projectile
+        class Basketball {
+            constructor(x, y, direction) {
+                this.x = x;
+                this.y = y;
+                this.radius = 15;
+                this.speed = 10;
+                this.direction = direction;
+            }
 
-        // Input handling
-        const keys = {};
-        const touchState = {
-            left: false,
-            right: false,
-            jump: false,
-            block: false
-        };
+            update() {
+                this.x += this.speed * this.direction;
+            }
 
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
+            draw() {
+                // Draw basketball
+                ctx.fillStyle = '#ff6b35';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Basketball lines
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        // Particle effects
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = Math.random() * 6 - 3;
+                this.speedY = Math.random() * 6 - 3;
+                this.color = color;
+                this.life = 30;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life--;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life / 30;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function drawPlayer() {
+            // Draw LeBron
+            ctx.fillStyle = '#552583'; // Lakers purple
+            ctx.fillRect(player.x, player.y, player.width, player.height);
             
-            if (gameState === 'playing') {
-                const key = e.key.toLowerCase();
-                
-                // Player 1 controls
-                if (key === KEYS.P1_JUMP) player1.jump();
-                if (key === KEYS.P1_PUNCH) player1.punch();
-                if (key === KEYS.P1_KICK) player1.kick();
-                if (key === KEYS.P1_SPECIAL) {
-                    if (player1.special >= SPECIAL_MAX) player1.ultimateMove();
-                    else player1.specialMove();
-                }
-                
-                // Player 2 controls
-                if (gameMode === '2P') {
-                    if (key === KEYS.P2_JUMP) player2.jump();
-                    if (key === KEYS.P2_PUNCH) player2.punch();
-                    if (key === KEYS.P2_KICK) player2.kick();
-                    if (key === KEYS.P2_SPECIAL) {
-                        if (player2.special >= SPECIAL_MAX) player2.ultimateMove();
-                        else player2.specialMove();
-                    }
-                }
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-        });
-
-        // Touch Controls
-        function isTouchDevice() {
-            return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        }
-
-        function setupTouchControls() {
-            const touchControls = document.getElementById('touchControls');
-            if (!isTouchDevice()) return;
-
-            const buttons = touchControls.querySelectorAll('.touch-button');
+            // Draw number 23
+            ctx.fillStyle = '#fdb927'; // Lakers gold
+            ctx.font = '20px Arial';
+            ctx.fillText('23', player.x + 15, player.y + 45);
             
-            buttons.forEach(button => {
-                const action = button.getAttribute('data-action');
-                
-                // Touch start
-                button.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    if (gameState !== 'playing') return;
-                    
-                    switch(action) {
-                        case 'jump':
-                            touchState.jump = true;
-                            player1.jump();
-                            break;
-                        case 'left':
-                            touchState.left = true;
-                            break;
-                        case 'right':
-                            touchState.right = true;
-                            break;
-                        case 'block':
-                            touchState.block = true;
-                            player1.block();
-                            break;
-                        case 'punch':
-                            player1.punch();
-                            break;
-                        case 'kick':
-                            player1.kick();
-                            break;
-                        case 'special':
-                            if (player1.special >= SPECIAL_MAX) player1.ultimateMove();
-                            else player1.specialMove();
-                            break;
-                    }
-                });
-                
-                // Touch end
-                button.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    
-                    switch(action) {
-                        case 'jump':
-                            touchState.jump = false;
-                            break;
-                        case 'left':
-                            touchState.left = false;
-                            break;
-                        case 'right':
-                            touchState.right = false;
-                            break;
-                        case 'block':
-                            touchState.block = false;
-                            player1.stopBlock();
-                            break;
-                    }
-                });
-
-                // Prevent context menu on long press
-                button.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                });
-            });
+            // Draw head
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2, player.y - 15, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw crown (because he's the King)
+            ctx.fillStyle = '#fdb927';
+            ctx.fillText('👑', player.x + 15, player.y - 25);
         }
 
-        // Screen effects
-        let shakeAmount = 0;
-        let flashAlpha = 0;
+        function updatePlayer() {
+            // Movement
+            if (keys['ArrowLeft'] && player.x > 0) {
+                player.x -= player.speed;
+                player.direction = -1;
+            }
+            if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
+                player.x += player.speed;
+                player.direction = 1;
+            }
 
-        function screenShake(amount) {
-            shakeAmount = amount;
+            // Jumping
+            if (keys['ArrowUp'] && !player.isJumping) {
+                player.velocityY = -player.jumpPower;
+                player.isJumping = true;
+            }
+
+            // Gravity
+            player.velocityY += player.gravity;
+            player.y += player.velocityY;
+
+            // Ground collision
+            if (player.y > 400) {
+                player.y = 400;
+                player.velocityY = 0;
+                player.isJumping = false;
+            }
+
+            // Attack
+            player.attackCooldown--;
+            if (keys['Space'] && player.attackCooldown <= 0) {
+                shootBasketball();
+                player.attackCooldown = 20;
+            }
         }
 
-        function flashScreen() {
-            flashAlpha = 0.5;
+        function shootBasketball() {
+            basketballs.push(new Basketball(
+                player.x + (player.direction > 0 ? player.width : 0),
+                player.y + player.height / 2,
+                player.direction
+            ));
+            createParticles(player.x + player.width/2, player.y + player.height/2, '#ff6b35');
         }
 
-        // Game loop
-        function update() {
+        function spawnEnemies() {
+            if (enemies.length < 3 + level) {
+                const isBoss = Math.random() < 0.1;
+                enemies.push(new Enemy(
+                    canvas.width - 100,
+                    400,
+                    isBoss ? 'boss' : 'normal'
+                ));
+            }
+        }
+
+        function updateGame() {
             if (gameState !== 'playing') return;
-            
-            // Update combo timer
-            if (comboTimer > 0) {
-                comboTimer--;
-                if (comboTimer === 0) comboCounter = 0;
-            }
-            
-            // Handle continuous movement (keyboard + touch)
-            if (keys[KEYS.P1_LEFT] || touchState.left) player1.moveLeft();
-            if (keys[KEYS.P1_RIGHT] || touchState.right) player1.moveRight();
-            if (keys[KEYS.P1_BLOCK] || touchState.block) player1.block();
-            else player1.stopBlock();
-            
-            if (gameMode === '2P') {
-                if (keys[KEYS.P2_LEFT]) player2.moveLeft();
-                if (keys[KEYS.P2_RIGHT]) player2.moveRight();
-                if (keys[KEYS.P2_BLOCK]) player2.block();
-                else player2.stopBlock();
-            } else {
-                // Simple AI for CPU
-                updateCPU();
-            }
-            
-            // Update players
-            player1.update();
-            player2.update();
-            
-            // Check collisions
-            checkCollisions();
-            
-            // Update timer
-            const elapsed = Math.floor((Date.now() - roundStartTime) / 1000);
-            roundTime = Math.max(0, ROUND_TIME - elapsed);
-            document.getElementById('timer').textContent = roundTime;
-            
-            // Check round end conditions
-            if (roundTime === 0 || player1.health === 0 || player2.health === 0) {
-                endRound();
-            }
-            
-            // Update HUD
-            updateHUD();
-        }
 
-        function updateCPU() {
-            const cpu = player2;
-            const player = player1;
-            const distance = Math.abs(cpu.x - player.x);
-            
-            // Get level difficulty
-            const levelConfig = LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1];
-            const aggression = levelConfig.aiAggression;
-            const aiSpeed = levelConfig.aiSpeed;
-            
-            // Apply speed multiplier to AI reactions
-            const shouldAct = Math.random() < aiSpeed;
-            
-            if (!shouldAct) return;
-            
-            // Simple AI logic with difficulty scaling
-            if (distance > 150) {
-                // Move towards player
-                if (cpu.x < player.x) cpu.moveRight();
-                else cpu.moveLeft();
-            } else if (distance < 80) {
-                // Too close, back up or attack
-                if (Math.random() < aggression) {
-                    const rand = Math.random();
-                    if (rand < 0.4) cpu.punch();
-                    else if (rand < 0.7) cpu.kick();
-                } else {
-                    if (cpu.x < player.x) cpu.moveLeft();
-                    else cpu.moveRight();
-                }
-            } else {
-                // Attack range - scale with aggression
-                const rand = Math.random();
-                if (rand < AI_PUNCH_CHANCE * aggression) cpu.punch();
-                else if (rand < (AI_PUNCH_CHANCE + AI_KICK_CHANCE) * aggression) cpu.kick();
-                else if (rand < (AI_PUNCH_CHANCE + AI_KICK_CHANCE + AI_SPECIAL_CHANCE) * aggression && cpu.special >= 30) cpu.specialMove();
-            }
-            
-            // Random jump - more frequent at higher levels
-            if (Math.random() < 0.01 * aggression) cpu.jump();
-            
-            // Block when player is attacking - better at higher levels
-            if (player.isAttacking && distance < 100 && Math.random() < 0.3 * aggression) {
-                cpu.block();
-            } else {
-                cpu.stopBlock();
-            }
-            
-            // Ultimate move when available at higher levels
-            if (cpu.special >= SPECIAL_MAX && Math.random() < 0.1 * aggression && distance < 150) {
-                cpu.ultimateMove();
-            }
-        }
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        function checkCollisions() {
-            // Check player1's attacks on player2
-            if (player1.attackHitbox.active) {
-                if (checkHitboxCollision(player1.attackHitbox, player2)) {
-                    player2.takeDamage(player1.attackHitbox.damage, player1.attackHitbox.type);
-                    player1.attackHitbox.active = false;
-                }
-            }
-            
-            // Check player2's attacks on player1
-            if (player2.attackHitbox.active) {
-                if (checkHitboxCollision(player2.attackHitbox, player1)) {
-                    player1.takeDamage(player2.attackHitbox.damage, player2.attackHitbox.type);
-                    player2.attackHitbox.active = false;
-                }
-            }
-            
-            // Check projectile collisions
-            if (player1.projectile && checkProjectileCollision(player1.projectile, player2)) {
-                player2.takeDamage(player1.projectile.damage, 'special');
-                player1.projectile = null;
-            }
-            
-            if (player2.projectile && checkProjectileCollision(player2.projectile, player1)) {
-                player1.takeDamage(player2.projectile.damage, 'special');
-                player2.projectile = null;
-            }
-        }
-
-        function checkHitboxCollision(hitbox, player) {
-            return hitbox.x < player.x + player.width &&
-                   hitbox.x + hitbox.width > player.x &&
-                   hitbox.y < player.y + player.height &&
-                   hitbox.y + hitbox.height > player.y;
-        }
-
-        function checkProjectileCollision(projectile, player) {
-            const dist = Math.hypot(projectile.x - (player.x + player.width / 2), 
-                                   projectile.y - (player.y + player.height / 2));
-            return dist < projectile.size / 2 + 30;
-        }
-
-        function updateHUD() {
-            // Calculate health percentage based on max health
-            const p1HealthPercent = player1.maxHealth ? (player1.health / player1.maxHealth) * 100 : player1.health;
-            const p2HealthPercent = player2.maxHealth ? (player2.health / player2.maxHealth) * 100 : player2.health;
-            
-            document.getElementById('player1Health').style.width = Math.max(0, p1HealthPercent) + '%';
-            document.getElementById('player2Health').style.width = Math.max(0, p2HealthPercent) + '%';
-            document.getElementById('player1Special').style.width = player1.special + '%';
-            document.getElementById('player2Special').style.width = player2.special + '%';
-            
-            // Update win indicators
-            updateWinDots();
-        }
-
-        function updateWinDots() {
-            const p1Dots = document.getElementById('player1Wins').children;
-            const p2Dots = document.getElementById('player2Wins').children;
-            
-            for (let i = 0; i < 2; i++) {
-                p1Dots[i].classList.toggle('won', i < player1.wins);
-                p2Dots[i].classList.toggle('won', i < player2.wins);
-            }
-        }
-
-        function draw() {
-            // Clear with shake
-            ctx.save();
-            if (shakeAmount > 0) {
-                const shakeX = (Math.random() - 0.5) * shakeAmount;
-                const shakeY = (Math.random() - 0.5) * shakeAmount;
-                ctx.translate(shakeX, shakeY);
-                shakeAmount *= 0.9;
-            }
-            
-            // Background
-            ctx.fillStyle = '#2c3e50';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
             // Draw court lines
-            ctx.strokeStyle = '#fff';
+            ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 3;
             ctx.setLineDash([10, 10]);
             ctx.beginPath();
@@ -1801,6 +1321,114 @@
         
         // Start game loop
         gameLoop();
+    </script>
+</body>
+</html>
+
+            // Update and draw player
+            updatePlayer();
+            drawPlayer();
+
+            // Update and draw enemies
+            enemies.forEach((enemy, index) => {
+                enemy.update();
+                enemy.draw();
+
+                // Check collision with basketballs
+                basketballs.forEach((ball, ballIndex) => {
+                    const dist = Math.hypot(ball.x - enemy.x, ball.y - enemy.y);
+                    if (dist < ball.radius + 30) {
+                        enemy.health -= 25;
+                        basketballs.splice(ballIndex, 1);
+                        createParticles(enemy.x, enemy.y, '#ffff00');
+                        
+                        if (enemy.health <= 0) {
+                            enemies.splice(index, 1);
+                            score += enemy.type === 'boss' ? 50 : 10;
+                            createParticles(enemy.x, enemy.y, '#00ff00');
+                        }
+                    }
+                });
+
+                // Check collision with player
+                if (Math.abs(player.x - enemy.x) < 50 && Math.abs(player.y - enemy.y) < 70) {
+                    player.health -= 0.1;
+                }
+            });
+
+            // Update and draw basketballs
+            basketballs.forEach((ball, index) => {
+                ball.update();
+                ball.draw();
+                if (ball.x < 0 || ball.x > canvas.width) {
+                    basketballs.splice(index, 1);
+                }
+            });
+
+            // Update and draw particles
+            particles.forEach((particle, index) => {
+                particle.update();
+                particle.draw();
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+
+            // Spawn enemies
+            if (Math.random() < 0.02) {
+                spawnEnemies();
+            }
+
+            // Level up
+            if (score > level * 100) {
+                level++;
+                createParticles(player.x, player.y, '#fdb927');
+            }
+
+            // Update UI
+            document.getElementById('score').textContent = score;
+            document.getElementById('health').textContent = Math.max(0, Math.floor(player.health));
+            document.getElementById('level').textContent = level;
+
+            // Check game over
+            if (player.health <= 0) {
+                gameOver();
+            }
+
+            requestAnimationFrame(updateGame);
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('stats').style.display = 'block';
+            score = 0;
+            level = 1;
+            player.health = 100;
+            player.x = 100;
+            player.y = 400;
+            enemies = [];
+            basketballs = [];
+            particles = [];
+            updateGame();
+        }
+
+        function gameOver() {
+            gameState = 'gameOver';
+            document.getElementById('finalScore').textContent = `Final Score: ${score} | Level: ${level}`;
+            document.getElementById('gameOverScreen').style.display = 'block';
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            startGame();
+        }
+
+        // Initial draw
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('Press Start to Begin!', canvas.width / 2, canvas.height / 2);
     </script>
 </body>
 </html>
