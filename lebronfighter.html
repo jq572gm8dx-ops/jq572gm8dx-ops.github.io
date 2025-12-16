@@ -1625,7 +1625,9 @@
         }
         
         function updateShopItem(type, level) {
-            const costs = [0, 50, 100, 200, 400, 800]; // Cost for each upgrade level
+            // costs[i] = cost to upgrade FROM level i TO level i+1
+            // e.g., costs[1] = 50 coins to go from level 1 to level 2
+            const costs = [0, 50, 100, 200, 400, 800];
             const nextCost = level < 5 ? costs[level] : 0;
             
             document.getElementById(`${type}Level`).textContent = level;
@@ -1685,6 +1687,7 @@
         }
         
         function buyUpgrade(type) {
+            // costs[i] = cost to upgrade FROM level i TO level i+1
             const costs = [0, 50, 100, 200, 400, 800];
             const currentLevel = playerData[`${type}Level`];
             
