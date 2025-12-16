@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeBron Fighter - Game Info</title>
+    <link rel="icon" type="image/png" href="coolbrongames.png">
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase (Local) -->
+    <script src="firebase-app-compat.js"></script>
+    <script src="firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        /* Custom font for a game-like feel */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background-color: #0a0e27;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* Custom Pixel Button Effect */
+        .pixel-btn {
+            position: relative;
+            border: 4px solid #fcfc30;
+            border-radius: 8px;
+            box-shadow: 
+                -4px -4px 0 #fcfc30,
+                4px 4px 0 #1e3a8a;
+            transition: all 0.1s ease-out;
+        }
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 
+                -2px -2px 0 #fcfc30,
+                2px 2px 0 #1e3a8a;
+        }
+        .pixel-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        /* Custom Card Effect */
+        .pixel-card {
+            border: 4px solid #1e3a8a;
+            box-shadow: 
+                -8px -8px 0 #3b82f6,
+                8px 8px 0 #a855f7;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .pixel-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                -12px -12px 0 #3b82f6,
+                12px 12px 0 #a855f7;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 500;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #fcfc30;
+            background: #1e3a8a;
+            color: #fcfc30;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(252, 252, 48, 0.5);
+        }
+
+        .control-badge {
+            background: #1e3a8a;
+            color: #fcfc30;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin: 0.25rem;
+        }
+
+        .move-card {
+            background: linear-gradient(135deg, #552583 0%, #fdb927 100%);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: 3px solid #fdb927;
+        }
+
+        .move-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .move-desc {
+            color: #f0f0f0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8 dark-mode">
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
+
+    <!-- Main Container -->
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Back Button -->
+        <div class="mb-6">
+            <button onclick="window.location.href='index.html'" class="pixel-btn bg-gray-700 text-yellow-400 py-3 px-6 rounded-lg font-bold">
+                ← BACK TO HOME
+            </button>
+        </div>
+
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="pixel-font text-4xl md:text-5xl text-yellow-400 mb-4">🏀 LEBRON FIGHTER 👑</h1>
+            <p class="text-xl text-gray-400">The King's Court - Street Fighter Meets Basketball</p>
+        </header>
+
+        <!-- Game Description -->
+        <section class="pixel-card bg-gray-800 p-6 md:p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-4">About The Game</h2>
+            <p class="text-gray-300 mb-4 leading-relaxed">
+                Step into the arena where basketball meets fighting! LeBron Fighter is a 2D fighting game 
+                that combines the intensity of Street Fighter with the legendary skills of LeBron James. 
+                Choose your side - Lakers purple and gold or Heat red and black - and battle it out on 
+                the basketball court in an epic showdown!
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Master powerful moves inspired by LeBron's greatest moments, build your special meter, 
+                and unleash devastating ultimates to dominate your opponent. Best of 3 rounds - may the 
+                best King win! 👑
+            </p>
+        </section>
+
+        <!-- How to Play -->
+        <section class="pixel-card bg-gray-800 p-6 md:p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">How To Play</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-xl text-yellow-400 mb-3 font-bold">Game Modes</h3>
+                <ul class="text-gray-300 space-y-2 list-disc list-inside">
+                    <li><strong>1 Player vs CPU:</strong> Battle against an AI opponent</li>
+                    <li><strong>2 Player Mode:</strong> Face off against a friend locally</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl text-yellow-400 mb-3 font-bold">Win Condition</h3>
+                <p class="text-gray-300 mb-2">Best of 3 rounds - first to win 2 rounds wins the match!</p>
+                <p class="text-gray-300">Each round lasts 90 seconds. Reduce your opponent's health to zero or have more health when time runs out.</p>
+            </div>
+
+            <div>
+                <h3 class="text-xl text-yellow-400 mb-3 font-bold">Special Meter</h3>
+                <p class="text-gray-300">
+                    Build up your special meter by dealing and taking damage. Use it to unleash powerful 
+                    special moves, or fill it completely to perform the devastating ultimate attack!
+                </p>
+            </div>
+        </section>
+
+        <!-- Controls -->
+        <section class="pixel-card bg-gray-800 p-6 md:p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Controls</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Player 1 -->
+                <div>
+                    <h3 class="text-xl text-purple-400 mb-4 font-bold">Player 1 (Lakers)</h3>
+                    <div class="space-y-2">
+                        <div><span class="control-badge">W</span> Jump</div>
+                        <div><span class="control-badge">A</span> Move Left</div>
+                        <div><span class="control-badge">S</span> Crouch/Block</div>
+                        <div><span class="control-badge">D</span> Move Right</div>
+                        <div><span class="control-badge">F</span> Punch (5 damage)</div>
+                        <div><span class="control-badge">G</span> Kick (8 damage)</div>
+                        <div><span class="control-badge">H</span> Special Move / Ultimate</div>
+                    </div>
+                </div>
+
+                <!-- Player 2 -->
+                <div>
+                    <h3 class="text-xl text-red-400 mb-4 font-bold">Player 2 (Heat)</h3>
+                    <div class="space-y-2">
+                        <div><span class="control-badge">↑</span> Jump</div>
+                        <div><span class="control-badge">←</span> Move Left</div>
+                        <div><span class="control-badge">↓</span> Crouch/Block</div>
+                        <div><span class="control-badge">→</span> Move Right</div>
+                        <div><span class="control-badge">J</span> Punch (5 damage)</div>
+                        <div><span class="control-badge">K</span> Kick (8 damage)</div>
+                        <div><span class="control-badge">L</span> Special Move / Ultimate</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-blue-900 bg-opacity-30 rounded-lg border-2 border-blue-500">
+                <h4 class="text-yellow-400 font-bold mb-2">📱 Mobile/Tablet Controls</h4>
+                <p class="text-gray-300 text-sm">
+                    On touch devices, virtual on-screen buttons will appear! Use the D-pad on the left 
+                    for movement and jumping, and action buttons on the right for attacks.
+                </p>
+            </div>
+        </section>
+
+        <!-- Special Moves -->
+        <section class="pixel-card bg-gray-800 p-6 md:p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Special Moves & Abilities</h2>
+            
+            <div class="space-y-4">
+                <div class="move-card">
+                    <div class="move-name">🏀 Heat Check - Projectile</div>
+                    <div class="move-desc">
+                        Launch a basketball projectile at your opponent! Costs 30 special meter. 
+                        Great for keeping distance and pressuring your opponent. (15 damage)
+                    </div>
+                </div>
+
+                <div class="move-card">
+                    <div class="move-name">👑 The Decision - Ultimate Attack</div>
+                    <div class="move-desc">
+                        Unleash the most powerful move when your special meter is full! 
+                        A devastating close-range attack with massive screen shake. (25 damage)
+                    </div>
+                </div>
+
+                <div class="move-card">
+                    <div class="move-name">🛡️ Block - Defensive Stance</div>
+                    <div class="move-desc">
+                        Hold the block button to reduce incoming damage by 70%. Perfect for 
+                        defending against opponent rushes and heavy attacks.
+                    </div>
+                </div>
+
+                <div class="move-card">
+                    <div class="move-name">🔥 Combo System</div>
+                    <div class="move-desc">
+                        Chain attacks together for bonus combo multipliers! Keep the pressure on 
+                        to build impressive combo streaks and fill your special meter faster.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips & Strategies -->
+        <section class="pixel-card bg-gray-800 p-6 md:p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Tips & Strategies</h2>
+            <ul class="text-gray-300 space-y-3 list-disc list-inside">
+                <li><strong>Mix it up:</strong> Combine punches, kicks, and special moves to keep your opponent guessing</li>
+                <li><strong>Block wisely:</strong> Blocking reduces damage significantly, but you can't attack while blocking</li>
+                <li><strong>Manage your meter:</strong> Save up for the ultimate, or use smaller specials to maintain pressure</li>
+                <li><strong>Spacing is key:</strong> Use projectiles to control distance, or get close for heavy damage</li>
+                <li><strong>Jump attacks:</strong> Time your jumps to avoid projectiles and approach safely</li>
+                <li><strong>Watch the timer:</strong> If you're ahead on health, play defensively as time runs out</li>
+                <li><strong>Combo potential:</strong> Land multiple hits quickly to build combo counters and special meter</li>
+            </ul>
+        </section>
+
+        <!-- Features -->
+        <section class="pixel-card bg-gray-800 p-6 md:p-8 rounded-xl mb-8">
+            <h2 class="pixel-font text-2xl text-yellow-400 mb-6">Game Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-2 border-purple-500">
+                    <div class="text-2xl mb-2">🎮</div>
+                    <div class="font-bold text-yellow-400 mb-1">Classic Fighting</div>
+                    <div class="text-sm text-gray-300">Street Fighter-style 2D combat</div>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-2 border-purple-500">
+                    <div class="text-2xl mb-2">🏀</div>
+                    <div class="font-bold text-yellow-400 mb-1">Basketball Theme</div>
+                    <div class="text-sm text-gray-300">LeBron-inspired moves and court arena</div>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-2 border-purple-500">
+                    <div class="text-2xl mb-2">👥</div>
+                    <div class="font-bold text-yellow-400 mb-1">1P & 2P Modes</div>
+                    <div class="text-sm text-gray-300">Solo vs CPU or local multiplayer</div>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-2 border-purple-500">
+                    <div class="text-2xl mb-2">📱</div>
+                    <div class="font-bold text-yellow-400 mb-1">Mobile Ready</div>
+                    <div class="text-sm text-gray-300">Touch controls for phones & tablets</div>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-2 border-purple-500">
+                    <div class="text-2xl mb-2">⚡</div>
+                    <div class="font-bold text-yellow-400 mb-1">Special Moves</div>
+                    <div class="text-sm text-gray-300">Projectiles, ultimates, and combos</div>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-2 border-purple-500">
+                    <div class="text-2xl mb-2">🏆</div>
+                    <div class="font-bold text-yellow-400 mb-1">Round System</div>
+                    <div class="text-sm text-gray-300">Best of 3 competitive matches</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Play Now -->
+        <div class="text-center mb-12">
+            <button onclick="window.location.href='lebronfighter.html'" class="pixel-btn bg-red-600 text-white py-4 px-12 rounded-lg font-bold text-xl hover:bg-red-700 transition-colors">
+                PLAY NOW! 👑
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center pt-8 border-t-4 border-double border-yellow-400">
+            <button onclick="window.location.href='index.html'" class="pixel-btn bg-gray-700 text-yellow-400 py-3 px-6 rounded-lg font-bold mb-4">
+                ← BACK TO HOME
+            </button>
+            <p class="text-xs text-gray-600 mt-4">
+                Part of CoolBronGames | Not affiliated with LeBron James or the NBA
+            </p>
+        </footer>
+
+    </div>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlBody = document.body;
+
+        function toggleTheme() {
+            if (htmlBody.classList.contains('dark-mode')) {
+                htmlBody.classList.remove('dark-mode');
+                htmlBody.classList.add('light-mode');
+                themeToggle.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlBody.classList.remove('light-mode');
+                htmlBody.classList.add('dark-mode');
+                themeToggle.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            htmlBody.classList.remove('dark-mode');
+            htmlBody.classList.add('light-mode');
+            themeToggle.textContent = '☀️';
+        }
+    </script>
+</body>
+</html>

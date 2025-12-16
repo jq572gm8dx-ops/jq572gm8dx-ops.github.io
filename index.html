@@ -532,7 +532,21 @@
                         <p class="text-xs text-gray-500 mb-0">⏱️ Time Played: <span id="pacplaysStat">0h 0m</span></p>
                     </a>
 
-                    <!-- Game Card 3: Coming Soon -->
+                    <!-- Game Card 3: LeBron Fighter -->
+                    <a href="lebronfighter-info.html" class="pixel-card bg-gray-800 p-6 rounded-xl cursor-pointer game-card-link">
+                        <img src="coolbrongames.png" alt="LeBron Fighter" class="game-thumbnail">
+                        <div class="mb-3">
+                            <span class="difficulty-badge difficulty-medium">Medium</span>
+                            <span class="difficulty-badge difficulty-hard">Hard</span>
+                        </div>
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">LeBron Fighter 👑</h3>
+                        <p class="text-sm text-gray-400 mb-4">
+                            Street Fighter meets basketball! Battle as Lakers or Heat LeBron in this 2D fighting game. Master special moves, build combos, and dominate the court. 1P vs CPU or 2P local multiplayer!
+                        </p>
+                        <p class="text-xs text-gray-500 mb-0">⏱️ Time Played: <span id="fighterplaysStat">0h 0m</span></p>
+                    </a>
+
+                    <!-- Game Card 4: Coming Soon -->
                     <div class="pixel-card bg-gray-800 p-6 rounded-xl">
                         <img src="comingsoon.png" alt="Coming Soon" class="game-thumbnail">
                         <div class="countdown" id="countdownTimer"></div>
@@ -548,7 +562,7 @@
 
             <!-- Active Games Tab -->
             <div id="tab-active" class="tab-content">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div class="pixel-card bg-gray-800 p-6 rounded-xl">
                         <img src="Untitled design.png" alt="FlappyBron" class="game-thumbnail">
                         <h3 class="pixel-font text-xl text-yellow-400 mb-2">FlappyBron</h3>
@@ -560,6 +574,14 @@
                     <div class="pixel-card bg-gray-800 p-6 rounded-xl">
                         <img src="pacbron.png" alt="PacBron" class="game-thumbnail">
                         <h3 class="pixel-font text-xl text-yellow-400 mb-2">PacBron</h3>
+                        <div class="stat-box mt-4">
+                            <div class="stat-value">Unlocked</div>
+                            <div class="stat-label">Full Access</div>
+                        </div>
+                    </div>
+                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
+                        <img src="coolbrongames.png" alt="LeBron Fighter" class="game-thumbnail">
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">LeBron Fighter</h3>
                         <div class="stat-box mt-4">
                             <div class="stat-value">Unlocked</div>
                             <div class="stat-label">Full Access</div>
@@ -580,7 +602,7 @@
 
             <!-- Leaderboard Tab -->
             <div id="tab-leaderboard" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="pixel-card bg-gray-800 p-6 rounded-xl">
                         <h3 class="pixel-font text-xl text-yellow-400 mb-4">FlappyBron - Global Leaderboard</h3>
                         <table class="leaderboard-table">
@@ -609,6 +631,23 @@
                                 </tr>
                             </thead>
                             <tbody id="pacleaderboardBody">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
+                        <h3 class="pixel-font text-xl text-yellow-400 mb-4">LeBron Fighter - Global Leaderboard</h3>
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fighterleaderboardBody">
                                 <tr>
                                     <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
                                 </tr>
@@ -882,6 +921,21 @@
                     `).join('');
                 } else {
                     pacBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first!</td></tr>';
+                }
+
+                // Load LeBron Fighter leaderboard
+                const fighterScores = await getTopScores('LeBronFighter', 10);
+                const fighterBody = document.getElementById('fighterleaderboardBody');
+                if (fighterScores.length > 0) {
+                    fighterBody.innerHTML = fighterScores.map((score, index) => `
+                        <tr>
+                            <td>#${index + 1}</td>
+                            <td>${score.playerName}</td>
+                            <td>${score.score.toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    fighterBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first!</td></tr>';
                 }
             } catch (error) {
                 console.log('Firebase not configured yet. Using local stats only.');
