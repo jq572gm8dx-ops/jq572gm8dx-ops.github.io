@@ -47,7 +47,7 @@
             image-rendering: pixelated;
         }
 
-        #startScreen, #roundScreen, #endScreen {
+        #startScreen, #roundScreen, #endScreen, #mainMenu, #shopScreen, #levelSelect {
             position: absolute;
             top: 0;
             left: 0;
@@ -307,6 +307,109 @@
         .btn-kick { bottom: 70px; right: 50px; width: 60px; height: 60px; }
         .btn-special { bottom: 20px; right: 120px; width: 60px; height: 60px; }
 
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .shop-item {
+            background: rgba(85, 37, 131, 0.3);
+            border: 3px solid #fdb927;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .shop-item h4 {
+            font-size: 0.9rem;
+            color: #fdb927;
+            margin-bottom: 10px;
+        }
+
+        .shop-item p {
+            font-size: 0.7rem;
+            margin: 5px 0;
+        }
+
+        .shop-item button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 0.7rem;
+        }
+
+        .coins-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(85, 37, 131, 0.9);
+            border: 3px solid #fdb927;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            color: #fdb927;
+            z-index: 100;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .level-button {
+            padding: 20px;
+            font-size: 1.2rem;
+            background: #552583;
+            position: relative;
+        }
+
+        .level-button.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-button .difficulty {
+            font-size: 0.6rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .stats-panel {
+            background: rgba(85, 37, 131, 0.3);
+            border: 3px solid #fdb927;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .stats-panel h3 {
+            color: #fdb927;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .stat-bar {
+            margin: 10px 0;
+        }
+
+        .stat-bar label {
+            font-size: 0.7rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-bar-fill {
+            height: 20px;
+            background: linear-gradient(90deg, #fdb927 0%, #ff6600 100%);
+            border: 2px solid #fdb927;
+            border-radius: 5px;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 1.5rem; }
             .title-small { font-size: 1.2rem; }
@@ -314,6 +417,10 @@
             .controls { padding: 10px; margin: 10px; }
             .control-grid { font-size: 0.5rem; gap: 10px; }
             canvas { height: 400px; }
+            .coins-display { font-size: 0.9rem; padding: 8px 15px; top: 10px; right: 10px; }
+            .shop-grid, .level-grid { grid-template-columns: 1fr; }
+            .shop-item h4 { font-size: 0.7rem; }
+            .shop-item p { font-size: 0.6rem; }
             
             #hud {
                 padding: 0 10px;
@@ -355,8 +462,122 @@
     </style>
 </head>
 <body>
+    <!-- Coins Display -->
+    <div id="coinsDisplay" class="coins-display hidden">
+        🪙 <span id="coinsAmount">0</span>
+    </div>
+
     <div id="gameContainer">
         <canvas id="gameCanvas" width="1200" height="600"></canvas>
+        
+        <!-- Main Menu -->
+        <div id="mainMenu">
+            <h1>🏀 LEBRON FIGHTER 👑</h1>
+            <p style="margin-bottom: 30px; font-size: 0.9rem;">THE KING'S COURT</p>
+            
+            <button id="startCampaignButton">CAMPAIGN MODE</button>
+            <button id="start2PButtonMain">2 PLAYER VS</button>
+            <button id="shopButton">UPGRADE SHOP</button>
+            <button onclick="window.location.href='lebronfighter-info.html'" style="background: #333; border-color: #666;">GAME INFO</button>
+            <button onclick="window.location.href='index.html'" style="background: #333; border-color: #666;">BACK TO HOME</button>
+        </div>
+
+        <!-- Level Select -->
+        <div id="levelSelect" class="hidden">
+            <h1 class="title-small">SELECT LEVEL</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">FIGHT PROGRESSIVELY HARDER OPPONENTS</p>
+            
+            <div class="level-grid">
+                <button class="level-button" data-level="1">
+                    LEVEL 1
+                    <span class="difficulty">Easy</span>
+                </button>
+                <button class="level-button locked" data-level="2">
+                    LEVEL 2
+                    <span class="difficulty">Medium</span>
+                </button>
+                <button class="level-button locked" data-level="3">
+                    LEVEL 3
+                    <span class="difficulty">Hard</span>
+                </button>
+                <button class="level-button locked" data-level="4">
+                    LEVEL 4
+                    <span class="difficulty">Very Hard</span>
+                </button>
+                <button class="level-button locked" data-level="5">
+                    LEVEL 5
+                    <span class="difficulty">Expert</span>
+                </button>
+                <button class="level-button locked" data-level="6">
+                    LEVEL 6
+                    <span class="difficulty">Master</span>
+                </button>
+            </div>
+            
+            <button id="backFromLevelSelect" style="background: #333; border-color: #666; margin-top: 20px;">BACK TO MENU</button>
+        </div>
+
+        <!-- Shop Screen -->
+        <div id="shopScreen" class="hidden">
+            <h1 class="title-small">UPGRADE SHOP</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">USE COINS TO UPGRADE YOUR FIGHTER</p>
+            
+            <div class="stats-panel">
+                <h3>YOUR STATS</h3>
+                <div class="stat-bar">
+                    <label>Attack Power: <span id="statAttack">1</span></label>
+                    <div class="stat-bar-fill" id="statAttackBar" style="width: 20%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <label>Max Health: <span id="statHealth">100</span></label>
+                    <div class="stat-bar-fill" id="statHealthBar" style="width: 20%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <label>Speed: <span id="statSpeed">1</span></label>
+                    <div class="stat-bar-fill" id="statSpeedBar" style="width: 20%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <label>Special Power: <span id="statSpecial">1</span></label>
+                    <div class="stat-bar-fill" id="statSpecialBar" style="width: 20%;"></div>
+                </div>
+            </div>
+            
+            <div class="shop-grid">
+                <div class="shop-item">
+                    <h4>🥊 ATTACK BOOST</h4>
+                    <p>Increase punch & kick damage</p>
+                    <p>Level: <span id="attackLevel">1</span>/5</p>
+                    <p>Cost: <span id="attackCost">50</span> 🪙</p>
+                    <button id="buyAttack">UPGRADE</button>
+                </div>
+                
+                <div class="shop-item">
+                    <h4>❤️ HEALTH BOOST</h4>
+                    <p>Increase maximum health</p>
+                    <p>Level: <span id="healthLevel">1</span>/5</p>
+                    <p>Cost: <span id="healthCost">50</span> 🪙</p>
+                    <button id="buyHealth">UPGRADE</button>
+                </div>
+                
+                <div class="shop-item">
+                    <h4>⚡ SPEED BOOST</h4>
+                    <p>Move and attack faster</p>
+                    <p>Level: <span id="speedLevel">1</span>/5</p>
+                    <p>Cost: <span id="speedCost">50</span> 🪙</p>
+                    <button id="buySpeed">UPGRADE</button>
+                </div>
+                
+                <div class="shop-item">
+                    <h4>🔥 SPECIAL BOOST</h4>
+                    <p>Stronger special moves</p>
+                    <p>Level: <span id="specialLevel">1</span>/5</p>
+                    <p>Cost: <span id="specialCost">50</span> 🪙</p>
+                    <button id="buySpecial">UPGRADE</button>
+                </div>
+            </div>
+            
+            <button id="backFromShop" style="background: #333; border-color: #666; margin-top: 20px;">BACK TO MENU</button>
+        </div>
         
         <!-- HUD -->
         <div id="hud" class="hidden">
@@ -394,8 +615,8 @@
             </div>
         </div>
 
-        <!-- Start Screen -->
-        <div id="startScreen">
+        <!-- Start Screen (Hidden - now using main menu) -->
+        <div id="startScreen" class="hidden">
             <h1>🏀 LEBRON FIGHTER 👑</h1>
             <p style="margin-bottom: 30px; font-size: 0.9rem;">THE KING'S COURT</p>
             
@@ -502,13 +723,35 @@
         };
 
         // Game state
-        let gameState = 'start'; // start, playing, roundEnd, gameEnd
+        let gameState = 'mainMenu'; // mainMenu, levelSelect, shop, start, playing, roundEnd, gameEnd
         let gameMode = '1P'; // 1P or 2P
         let currentRound = 1;
         let roundTime = ROUND_TIME;
         let roundStartTime = 0;
         let comboCounter = 0;
         let comboTimer = 0;
+        let currentLevel = 1;
+        let maxUnlockedLevel = 1;
+        
+        // Player progression system
+        let playerData = {
+            coins: 0,
+            attackLevel: 1,
+            healthLevel: 1,
+            speedLevel: 1,
+            specialLevel: 1,
+            maxUnlockedLevel: 1
+        };
+        
+        // Level difficulty multipliers
+        const LEVEL_CONFIG = {
+            1: { name: 'Easy', aiSpeed: 0.7, aiAggression: 0.5, coinsReward: 50 },
+            2: { name: 'Medium', aiSpeed: 0.85, aiAggression: 0.7, coinsReward: 75 },
+            3: { name: 'Hard', aiSpeed: 1.0, aiAggression: 0.85, coinsReward: 100 },
+            4: { name: 'Very Hard', aiSpeed: 1.2, aiAggression: 1.0, coinsReward: 150 },
+            5: { name: 'Expert', aiSpeed: 1.4, aiAggression: 1.2, coinsReward: 200 },
+            6: { name: 'Master', aiSpeed: 1.6, aiAggression: 1.5, coinsReward: 300 }
+        };
 
         // Player class
         class Player {
@@ -607,7 +850,8 @@
 
             moveLeft() {
                 if (this.state !== 'hit' && this.state !== 'attacking') {
-                    this.velocityX = -MOVE_SPEED;
+                    const speedMultiplier = this.isPlayer1 ? (1 + playerData.speedLevel * 0.1) : 1;
+                    this.velocityX = -MOVE_SPEED * speedMultiplier;
                     this.facing = -1;
                     if (this.isGrounded) this.state = 'walking';
                 }
@@ -615,7 +859,8 @@
 
             moveRight() {
                 if (this.state !== 'hit' && this.state !== 'attacking') {
-                    this.velocityX = MOVE_SPEED;
+                    const speedMultiplier = this.isPlayer1 ? (1 + playerData.speedLevel * 0.1) : 1;
+                    this.velocityX = MOVE_SPEED * speedMultiplier;
                     this.facing = 1;
                     if (this.isGrounded) this.state = 'walking';
                 }
@@ -633,16 +878,18 @@
 
             punch() {
                 if (!this.isAttacking && this.state !== 'hit' && this.isGrounded) {
+                    const attackBoost = this.isPlayer1 ? playerData.attackLevel : 1;
+                    const speedBoost = this.isPlayer1 ? playerData.speedLevel : 1;
                     this.isAttacking = true;
                     this.state = 'attacking';
-                    this.attackTimer = 15;
+                    this.attackTimer = Math.max(10, 15 - speedBoost);
                     this.attackHitbox = {
                         x: this.x + (this.facing > 0 ? this.width : -40),
                         y: this.y + 20,
                         width: 40,
                         height: 30,
                         active: true,
-                        damage: 5,
+                        damage: 5 * attackBoost,
                         type: 'punch'
                     };
                 }
@@ -650,16 +897,18 @@
 
             kick() {
                 if (!this.isAttacking && this.state !== 'hit' && this.isGrounded) {
+                    const attackBoost = this.isPlayer1 ? playerData.attackLevel : 1;
+                    const speedBoost = this.isPlayer1 ? playerData.speedLevel : 1;
                     this.isAttacking = true;
                     this.state = 'attacking';
-                    this.attackTimer = 20;
+                    this.attackTimer = Math.max(12, 20 - speedBoost * 2);
                     this.attackHitbox = {
                         x: this.x + (this.facing > 0 ? this.width : -50),
                         y: this.y + 50,
                         width: 50,
                         height: 30,
                         active: true,
-                        damage: 8,
+                        damage: 8 * attackBoost,
                         type: 'kick'
                     };
                 }
@@ -667,25 +916,28 @@
 
             specialMove() {
                 if (!this.isAttacking && this.state !== 'hit' && this.special >= 30 && !this.projectile) {
+                    const specialBoost = this.isPlayer1 ? playerData.specialLevel : 1;
+                    const speedBoost = this.isPlayer1 ? playerData.speedLevel : 1;
                     this.special -= 30;
                     this.isAttacking = true;
                     this.state = 'attacking';
-                    this.attackTimer = 25;
+                    this.attackTimer = Math.max(15, 25 - speedBoost * 2);
                     
                     // Create projectile (Heat Check - Basketball)
                     this.projectile = {
                         x: this.x + this.width / 2,
                         y: this.y + 30,
-                        velocityX: this.facing * 8,
+                        velocityX: this.facing * (8 + speedBoost * 0.5),
                         velocityY: -5,
                         size: 20,
-                        damage: 15
+                        damage: 15 * specialBoost
                     };
                 }
             }
 
             ultimateMove() {
                 if (!this.isAttacking && this.state !== 'hit' && this.special >= SPECIAL_MAX) {
+                    const specialBoost = this.isPlayer1 ? playerData.specialLevel : 1;
                     this.special = 0;
                     this.isAttacking = true;
                     this.state = 'attacking';
@@ -698,7 +950,7 @@
                         width: 80,
                         height: 100,
                         active: true,
-                        damage: 25,
+                        damage: 25 * specialBoost,
                         type: 'ultimate'
                     };
                     
@@ -821,7 +1073,10 @@
                 this.y = GROUND_Y;
                 this.velocityX = 0;
                 this.velocityY = 0;
-                this.health = MAX_HEALTH;
+                // Apply health upgrade for player 1
+                const healthBoost = this.isPlayer1 ? playerData.healthLevel : 1;
+                this.health = MAX_HEALTH * healthBoost;
+                this.maxHealth = MAX_HEALTH * healthBoost;
                 this.special = 0;
                 this.state = 'idle';
                 this.isGrounded = true;
@@ -1019,31 +1274,52 @@
             const player = player1;
             const distance = Math.abs(cpu.x - player.x);
             
-            // Simple AI logic
+            // Get level difficulty
+            const levelConfig = LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1];
+            const aggression = levelConfig.aiAggression;
+            const aiSpeed = levelConfig.aiSpeed;
+            
+            // Apply speed multiplier to AI reactions
+            const shouldAct = Math.random() < aiSpeed;
+            
+            if (!shouldAct) return;
+            
+            // Simple AI logic with difficulty scaling
             if (distance > 150) {
                 // Move towards player
                 if (cpu.x < player.x) cpu.moveRight();
                 else cpu.moveLeft();
             } else if (distance < 80) {
-                // Too close, back up
-                if (cpu.x < player.x) cpu.moveLeft();
-                else cpu.moveRight();
+                // Too close, back up or attack
+                if (Math.random() < aggression) {
+                    const rand = Math.random();
+                    if (rand < 0.4) cpu.punch();
+                    else if (rand < 0.7) cpu.kick();
+                } else {
+                    if (cpu.x < player.x) cpu.moveLeft();
+                    else cpu.moveRight();
+                }
             } else {
-                // Attack range
+                // Attack range - scale with aggression
                 const rand = Math.random();
-                if (rand < AI_PUNCH_CHANCE) cpu.punch();
-                else if (rand < AI_PUNCH_CHANCE + AI_KICK_CHANCE) cpu.kick();
-                else if (rand < AI_PUNCH_CHANCE + AI_KICK_CHANCE + AI_SPECIAL_CHANCE && cpu.special >= 30) cpu.specialMove();
+                if (rand < AI_PUNCH_CHANCE * aggression) cpu.punch();
+                else if (rand < (AI_PUNCH_CHANCE + AI_KICK_CHANCE) * aggression) cpu.kick();
+                else if (rand < (AI_PUNCH_CHANCE + AI_KICK_CHANCE + AI_SPECIAL_CHANCE) * aggression && cpu.special >= 30) cpu.specialMove();
             }
             
-            // Random jump
-            if (Math.random() < 0.01) cpu.jump();
+            // Random jump - more frequent at higher levels
+            if (Math.random() < 0.01 * aggression) cpu.jump();
             
-            // Block when player is attacking
-            if (player.isAttacking && distance < 100 && Math.random() < 0.5) {
+            // Block when player is attacking - better at higher levels
+            if (player.isAttacking && distance < 100 && Math.random() < 0.3 * aggression) {
                 cpu.block();
             } else {
                 cpu.stopBlock();
+            }
+            
+            // Ultimate move when available at higher levels
+            if (cpu.special >= SPECIAL_MAX && Math.random() < 0.1 * aggression && distance < 150) {
+                cpu.ultimateMove();
             }
         }
 
@@ -1090,8 +1366,12 @@
         }
 
         function updateHUD() {
-            document.getElementById('player1Health').style.width = player1.health + '%';
-            document.getElementById('player2Health').style.width = player2.health + '%';
+            // Calculate health percentage based on max health
+            const p1HealthPercent = player1.maxHealth ? (player1.health / player1.maxHealth) * 100 : player1.health;
+            const p2HealthPercent = player2.maxHealth ? (player2.health / player2.maxHealth) * 100 : player2.health;
+            
+            document.getElementById('player1Health').style.width = Math.max(0, p1HealthPercent) + '%';
+            document.getElementById('player2Health').style.width = Math.max(0, p2HealthPercent) + '%';
             document.getElementById('player1Special').style.width = player1.special + '%';
             document.getElementById('player2Special').style.width = player2.special + '%';
             
@@ -1258,12 +1538,34 @@
         function endMatch() {
             gameState = 'gameEnd';
             
-            const winner = player1.wins >= 2 ? 'LAKERS LEBRON' : 'HEAT LEBRON';
+            const playerWon = player1.wins >= 2;
+            const winner = playerWon ? 'LAKERS LEBRON' : 'HEAT LEBRON';
             const score = Math.max(player1.wins, player2.wins) * 1000;
             
-            document.getElementById('endTitle').textContent = 'K.O.!';
+            // Award coins if player won in campaign mode
+            let coinsEarned = 0;
+            if (gameMode === '1P' && playerWon) {
+                const levelConfig = LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1];
+                coinsEarned = levelConfig.coinsReward;
+                playerData.coins += coinsEarned;
+                
+                // Unlock next level
+                if (currentLevel === playerData.maxUnlockedLevel && currentLevel < 6) {
+                    playerData.maxUnlockedLevel = currentLevel + 1;
+                }
+                
+                savePlayerData();
+                updateCoinsDisplay();
+            }
+            
+            document.getElementById('endTitle').textContent = playerWon ? 'VICTORY!' : 'K.O.!';
             document.getElementById('winnerText').textContent = `${winner} WINS!`;
-            document.getElementById('finalScore').textContent = `Score: ${score}`;
+            
+            let scoreText = `Score: ${score}`;
+            if (coinsEarned > 0) {
+                scoreText += `\n+${coinsEarned} Coins Earned!`;
+            }
+            document.getElementById('finalScore').textContent = scoreText;
             document.getElementById('endScreen').classList.remove('hidden');
             
             // Submit score to leaderboard
@@ -1291,18 +1593,186 @@
         }
 
         function resetGame() {
-            gameState = 'start';
+            gameState = 'mainMenu';
             document.getElementById('endScreen').classList.add('hidden');
             document.getElementById('hud').classList.add('hidden');
             document.getElementById('touchControls').classList.remove('active');
-            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('coinsDisplay').classList.remove('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+        
+        // Save/Load player data
+        function savePlayerData() {
+            try {
+                localStorage.setItem('lebronFighterPlayerData', JSON.stringify(playerData));
+            } catch (e) {
+                console.log('Could not save player data:', e);
+            }
+        }
+        
+        function loadPlayerData() {
+            try {
+                const saved = localStorage.getItem('lebronFighterPlayerData');
+                if (saved) {
+                    const loaded = JSON.parse(saved);
+                    playerData = { ...playerData, ...loaded };
+                }
+            } catch (e) {
+                console.log('Could not load player data:', e);
+            }
+            updateCoinsDisplay();
+            updateShopUI();
+            updateLevelSelect();
+        }
+        
+        // UI Update functions
+        function updateCoinsDisplay() {
+            document.getElementById('coinsAmount').textContent = playerData.coins;
+        }
+        
+        function updateShopUI() {
+            // Update stat displays
+            document.getElementById('statAttack').textContent = playerData.attackLevel;
+            document.getElementById('statHealth').textContent = MAX_HEALTH * playerData.healthLevel;
+            document.getElementById('statSpeed').textContent = playerData.speedLevel;
+            document.getElementById('statSpecial').textContent = playerData.specialLevel;
+            
+            // Update stat bars
+            document.getElementById('statAttackBar').style.width = (playerData.attackLevel * 20) + '%';
+            document.getElementById('statHealthBar').style.width = (playerData.healthLevel * 20) + '%';
+            document.getElementById('statSpeedBar').style.width = (playerData.speedLevel * 20) + '%';
+            document.getElementById('statSpecialBar').style.width = (playerData.specialLevel * 20) + '%';
+            
+            // Update shop items
+            updateShopItem('attack', playerData.attackLevel);
+            updateShopItem('health', playerData.healthLevel);
+            updateShopItem('speed', playerData.speedLevel);
+            updateShopItem('special', playerData.specialLevel);
+        }
+        
+        function updateShopItem(type, level) {
+            const costs = [0, 50, 100, 200, 400, 800]; // Cost for each level (index 0 unused)
+            const nextCost = level < 5 ? costs[level + 1] : 0;
+            
+            document.getElementById(`${type}Level`).textContent = level;
+            document.getElementById(`${type}Cost`).textContent = nextCost;
+            
+            const button = document.getElementById(`buy${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            if (level >= 5) {
+                button.textContent = 'MAX';
+                button.disabled = true;
+                button.style.opacity = '0.5';
+                button.style.cursor = 'not-allowed';
+            } else if (playerData.coins < nextCost) {
+                button.disabled = true;
+                button.style.opacity = '0.7';
+            } else {
+                button.disabled = false;
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+            }
+        }
+        
+        function updateLevelSelect() {
+            const buttons = document.querySelectorAll('.level-button');
+            buttons.forEach((button, index) => {
+                const level = index + 1;
+                if (level <= playerData.maxUnlockedLevel) {
+                    button.classList.remove('locked');
+                    button.disabled = false;
+                    button.style.cursor = 'pointer';
+                } else {
+                    button.classList.add('locked');
+                    button.disabled = true;
+                }
+            });
+        }
+        
+        // Navigation functions
+        function showMainMenu() {
+            document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('levelSelect').classList.add('hidden');
+            document.getElementById('shopScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('coinsDisplay').classList.remove('hidden');
+            gameState = 'mainMenu';
+        }
+        
+        function showLevelSelect() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('levelSelect').classList.remove('hidden');
+            updateLevelSelect();
+        }
+        
+        function showShop() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('shopScreen').classList.remove('hidden');
+            updateShopUI();
+        }
+        
+        function buyUpgrade(type) {
+            const costs = [0, 50, 100, 200, 400, 800];
+            const currentLevel = playerData[`${type}Level`];
+            
+            if (currentLevel >= 5) return; // Max level
+            
+            const cost = costs[currentLevel + 1];
+            if (playerData.coins >= cost) {
+                playerData.coins -= cost;
+                playerData[`${type}Level`]++;
+                savePlayerData();
+                updateCoinsDisplay();
+                updateShopUI();
+            }
         }
 
         // Event listeners
         document.getElementById('start1PButton').addEventListener('click', () => startGame('1P'));
         document.getElementById('start2PButton').addEventListener('click', () => startGame('2P'));
+        document.getElementById('start2PButtonMain').addEventListener('click', () => {
+            gameMode = '2P';
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('coinsDisplay').classList.add('hidden');
+            startGame('2P');
+        });
         document.getElementById('playAgainButton').addEventListener('click', () => {
             resetGame();
+        });
+        
+        // Main menu buttons
+        document.getElementById('startCampaignButton').addEventListener('click', () => {
+            showLevelSelect();
+        });
+        
+        document.getElementById('shopButton').addEventListener('click', () => {
+            showShop();
+        });
+        
+        // Level select
+        document.querySelectorAll('.level-button').forEach(button => {
+            button.addEventListener('click', () => {
+                if (!button.classList.contains('locked')) {
+                    currentLevel = parseInt(button.getAttribute('data-level'));
+                    gameMode = '1P';
+                    document.getElementById('levelSelect').classList.add('hidden');
+                    document.getElementById('coinsDisplay').classList.add('hidden');
+                    startGame('1P');
+                }
+            });
+        });
+        
+        document.getElementById('backFromLevelSelect').addEventListener('click', () => {
+            showMainMenu();
+        });
+        
+        // Shop buttons
+        document.getElementById('buyAttack').addEventListener('click', () => buyUpgrade('attack'));
+        document.getElementById('buyHealth').addEventListener('click', () => buyUpgrade('health'));
+        document.getElementById('buySpeed').addEventListener('click', () => buyUpgrade('speed'));
+        document.getElementById('buySpecial').addEventListener('click', () => buyUpgrade('special'));
+        
+        document.getElementById('backFromShop').addEventListener('click', () => {
+            showMainMenu();
         });
 
         // Initialize touch controls
@@ -1325,6 +1795,10 @@
             }
         }, { passive: false });
 
+        // Initialize game
+        loadPlayerData();
+        showMainMenu();
+        
         // Start game loop
         gameLoop();
     </script>
