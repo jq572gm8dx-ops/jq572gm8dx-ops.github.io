@@ -488,6 +488,36 @@
             <button onclick="window.location.href='index.html'" style="background: #333; border-color: #666;">BACK TO HOME</button>
         </div>
 
+        <!-- Ultimate Select -->
+        <div id="ultimateSelect" class="hidden">
+            <h1 class="title-small">SELECT ULTIMATE</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">CHOOSE YOUR SIGNATURE MOVE</p>
+            
+            <div class="shop-grid">
+                <div class="shop-item" style="cursor: pointer;" data-ultimate="theDecision">
+                    <h4>🔥 THE DECISION</h4>
+                    <p>Devastating close-range attack</p>
+                    <p>Damage: 25</p>
+                    <button class="select-ultimate-btn" data-ultimate="theDecision">SELECT</button>
+                </div>
+                <div class="shop-item" style="cursor: pointer;" data-ultimate="chaseDownBlock">
+                    <h4>🚫 CHASE DOWN BLOCK</h4>
+                    <p>Counter attack with block bonus</p>
+                    <p>Damage: 20 + Counter</p>
+                    <button class="select-ultimate-btn" data-ultimate="chaseDownBlock">SELECT</button>
+                </div>
+                <div class="shop-item" style="cursor: pointer;" data-ultimate="posterDunk">
+                    <h4>💪 POSTER DUNK</h4>
+                    <p>Ultimate power move</p>
+                    <p>Damage: 30</p>
+                    <button class="select-ultimate-btn" data-ultimate="posterDunk">SELECT</button>
+                </div>
+            </div>
+            
+            <button id="continueToLevelSelect" style="margin-top: 20px;">CONTINUE TO LEVEL SELECT</button>
+            <button id="backFromUltimateSelect" style="background: #333; border-color: #666; margin-top: 10px;">BACK TO MENU</button>
+        </div>
+
         <!-- Level Select -->
         <div id="levelSelect" class="hidden">
             <h1 class="title-small">SELECT LEVEL</h1>
@@ -545,8 +575,12 @@
                     <div class="stat-bar-fill" id="statSpeedBar" style="width: 20%;"></div>
                 </div>
                 <div class="stat-bar">
-                    <label>Block Boost: <span id="statSpecial">1</span></label>
+                    <label>Special Power: <span id="statSpecial">1</span></label>
                     <div class="stat-bar-fill" id="statSpecialBar" style="width: 20%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <label>Block Power: <span id="statBlock">1</span></label>
+                    <div class="stat-bar-fill" id="statBlockBar" style="width: 20%;"></div>
                 </div>
             </div>
             
@@ -577,10 +611,18 @@
                 
                 <div class="shop-item">
                     <h4>🛡️ BLOCK BOOST</h4>
-                    <p>Stronger Block</p>
+                    <p>Stronger Block - Reduce more damage</p>
                     <p>Level: <span id="blockLevel">1</span>/5</p>
                     <p>Cost: <span id="blockCost">50</span> 🪙</p>
                     <button id="buyBlock">UPGRADE</button>
+                </div>
+                
+                <div class="shop-item">
+                    <h4>⚡ SPECIAL BOOST</h4>
+                    <p>Increase special & ultimate damage</p>
+                    <p>Level: <span id="specialLevel">1</span>/5</p>
+                    <p>Cost: <span id="specialCost">50</span> 🪙</p>
+                    <button id="buySpecial">UPGRADE</button>
                 </div>
             </div>
             
@@ -590,7 +632,7 @@
         <!-- HUD -->
         <div id="hud" class="hidden">
             <div class="health-container">
-                <div class="health-label">LAKERS LEBRON</div>
+                <div class="health-label" id="player1Label">LAKERS LEBRON</div>
                 <div class="health-bar">
                     <div class="health-fill" id="player1Health" style="width: 100%;"></div>
                 </div>
@@ -601,6 +643,7 @@
                     <div class="win-dot"></div>
                     <div class="win-dot"></div>
                 </div>
+                <button id="player1UltimateBtn" class="hidden" style="margin-top: 5px; padding: 5px 10px; font-size: 0.6rem;">ULTIMATE (U)</button>
             </div>
             
             <div class="center-hud">
@@ -609,7 +652,7 @@
             </div>
             
             <div class="health-container">
-                <div class="health-label">HEAT LEBRON</div>
+                <div class="health-label" id="player2Label">HEAT LEBRON</div>
                 <div class="health-bar">
                     <div class="health-fill" id="player2Health" style="width: 100%;"></div>
                 </div>
@@ -620,6 +663,7 @@
                     <div class="win-dot"></div>
                     <div class="win-dot"></div>
                 </div>
+                <button id="player2UltimateBtn" class="hidden" style="margin-top: 5px; padding: 5px 10px; font-size: 0.6rem;">ULTIMATE (I)</button>
             </div>
         </div>
 
@@ -716,13 +760,20 @@
         
         // Level configuration
         const LEVEL_CONFIG = {
-            1: { difficulty: 0.5, aiSpeed: 3, aiReactionTime: 60, coinsReward: 50 },
-            2: { difficulty: 0.6, aiSpeed: 3.5, aiReactionTime: 50, coinsReward: 75 },
-            3: { difficulty: 0.7, aiSpeed: 4, aiReactionTime: 40, coinsReward: 100 },
-            4: { difficulty: 0.8, aiSpeed: 4.5, aiReactionTime: 30, coinsReward: 150 },
-            5: { difficulty: 0.9, aiSpeed: 5, aiReactionTime: 25, coinsReward: 200 },
-            6: { difficulty: 1.0, aiSpeed: 5.5, aiReactionTime: 20, coinsReward: 300 }
+            1: { difficulty: 0.5, aiSpeed: 3, aiReactionTime: 60, coinsReward: 50, opponentName: 'Heat LeBron', opponentColor: '#98002e' },
+            2: { difficulty: 0.6, aiSpeed: 3.5, aiReactionTime: 50, coinsReward: 75, opponentName: 'Stephen Curry', opponentColor: '#006BB6' },
+            3: { difficulty: 0.7, aiSpeed: 4, aiReactionTime: 40, coinsReward: 100, opponentName: 'Kevin Durant', opponentColor: '#002D62' },
+            4: { difficulty: 0.8, aiSpeed: 4.5, aiReactionTime: 30, coinsReward: 150, opponentName: 'Kawhi Leonard', opponentColor: '#C8102E' },
+            5: { difficulty: 0.9, aiSpeed: 5, aiReactionTime: 25, coinsReward: 200, opponentName: 'Kobe Bryant', opponentColor: '#552583' },
+            6: { difficulty: 1.0, aiSpeed: 5.5, aiReactionTime: 20, coinsReward: 300, opponentName: 'Michael Jordan', opponentColor: '#CE1141' }
         };
+        
+        // Ultimate types
+        const ULTIMATES = [
+            { id: 'theDecision', name: 'The Decision', damage: 25, description: 'Devastating close-range attack' },
+            { id: 'chaseDownBlock', name: 'Chase Down Block', damage: 20, description: 'Counter attack with block bonus' },
+            { id: 'posterDunk', name: 'Poster Dunk', damage: 30, description: 'Ultimate power move' }
+        ];
 
         // Game state
         let gameState = 'mainMenu';
@@ -746,7 +797,9 @@
             healthLevel: 1,
             speedLevel: 1,
             specialLevel: 1,
-            maxUnlockedLevel: 1
+            blockLevel: 1,
+            maxUnlockedLevel: 1,
+            selectedUltimate: 'theDecision'
         };
 
         // Player objects
@@ -781,6 +834,7 @@
                 this.velocityX = 0;
                 this.velocityY = 0;
                 this.direction = this.isPlayer1 ? 1 : -1;
+                this.isCrouching = false;
                 
                 // Health and meters
                 const healthBonus = this.isPlayer1 && !this.isAI ? (playerData.healthLevel - 1) * 20 : 0;
@@ -793,12 +847,14 @@
                 const attackBonus = this.isPlayer1 && !this.isAI ? (playerData.attackLevel - 1) * 2 : 0;
                 const speedBonus = this.isPlayer1 && !this.isAI ? (playerData.speedLevel - 1) * 0.5 : 0;
                 const specialBonus = this.isPlayer1 && !this.isAI ? (playerData.specialLevel - 1) * 3 : 0;
+                const blockBonus = this.isPlayer1 && !this.isAI ? (playerData.blockLevel - 1) * 0.1 : 0;
                 
                 this.punchDamage = BASE_PUNCH_DAMAGE + attackBonus;
                 this.kickDamage = BASE_KICK_DAMAGE + attackBonus;
                 this.specialDamage = SPECIAL_PROJECTILE_DAMAGE + specialBonus;
                 this.ultimateDamage = ULTIMATE_DAMAGE + specialBonus;
                 this.speed = BASE_SPEED + speedBonus;
+                this.blockReduction = BLOCK_REDUCTION + blockBonus;
                 
                 // States
                 this.state = 'idle'; // idle, walking, jumping, crouching, blocking, attacking, hit, ko
@@ -808,8 +864,15 @@
                 this.attackFrame = 0;
                 this.attackType = null;
                 
-                // Wins
-                this.wins = 0;
+                // Opponent info
+                if (this.isAI && gameMode === '1P') {
+                    const levelConfig = LEVEL_CONFIG[currentLevel];
+                    this.opponentName = levelConfig.opponentName;
+                    this.opponentColor = levelConfig.opponentColor;
+                } else if (!this.isPlayer1) {
+                    this.opponentName = 'Heat LeBron';
+                    this.opponentColor = '#98002e';
+                }
                 
                 // AI properties
                 if (this.isAI) {
@@ -867,22 +930,24 @@
                 
                 // Decay velocity
                 this.velocityX *= 0.85;
-                
-                // Update facing direction
-                if (opponent && Math.abs(this.velocityX) < 0.1) {
-                    this.direction = opponent.x > this.x ? 1 : -1;
-                }
             }
             
             handleInput() {
                 if (this.hitStun > 0 || this.state === 'attacking') return;
                 
                 const controls = this.isPlayer1 ? 
-                    { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', punch: 'KeyF', kick: 'KeyG', block: 'KeyH' } :
-                    { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', punch: 'KeyJ', kick: 'KeyK', block: 'KeyL' };
+                    { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', punch: 'KeyF', kick: 'KeyG', block: 'KeyH', ultimate: 'KeyU' } :
+                    { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', punch: 'KeyJ', kick: 'KeyK', block: 'KeyL', ultimate: 'KeyI' };
                 
-                // Block
-                this.isBlocking = (keys[controls.down] || keys[controls.block]) && this.y >= GROUND_Y;
+                // Crouch/Block
+                this.isCrouching = keys[controls.down] && this.y >= GROUND_Y;
+                this.isBlocking = keys[controls.block] && this.y >= GROUND_Y;
+                
+                if (this.isCrouching) {
+                    this.state = 'crouching';
+                    return;
+                }
+                
                 if (this.isBlocking) {
                     this.state = 'blocking';
                     return;
@@ -891,9 +956,11 @@
                 // Movement
                 if (keys[controls.left]) {
                     this.velocityX = -this.speed;
+                    this.direction = -1; // Face left when moving left
                     if (this.y >= GROUND_Y) this.state = 'walking';
                 } else if (keys[controls.right]) {
                     this.velocityX = this.speed;
+                    this.direction = 1; // Face right when moving right
                     if (this.y >= GROUND_Y) this.state = 'walking';
                 } else if (this.y >= GROUND_Y && this.state !== 'attacking') {
                     this.state = 'idle';
@@ -911,6 +978,8 @@
                         this.attack('punch');
                     } else if (keys[controls.kick]) {
                         this.attack('kick');
+                    } else if (keys[controls.ultimate] && this.specialMeter >= 100) {
+                        this.attack('ultimate');
                     }
                 }
             }
@@ -1002,13 +1071,21 @@
                 this.attackType = type;
                 this.attackCooldown = type === 'kick' ? 25 : 15;
                 
-                if (type === 'special') {
+                if (type === 'ultimate') {
                     if (this.specialMeter >= 100) {
-                        // Ultimate
                         this.specialMeter = 0;
-                        this.attackType = 'ultimate';
                         this.attackCooldown = 40;
-                    } else if (this.specialMeter >= 30) {
+                        // Get selected ultimate damage
+                        const ultimate = ULTIMATES.find(u => u.id === playerData.selectedUltimate);
+                        if (ultimate) {
+                            this.ultimateDamage = ultimate.damage + (this.isPlayer1 && !this.isAI ? (playerData.specialLevel - 1) * 3 : 0);
+                        }
+                    } else {
+                        this.state = 'idle';
+                        this.attackCooldown = 0;
+                    }
+                } else if (type === 'special') {
+                    if (this.specialMeter >= 30) {
                         // Projectile
                         this.specialMeter -= 30;
                         this.shootProjectile();
@@ -1032,13 +1109,20 @@
                 createParticles(this.x + this.width / 2, this.y + this.height / 2, '#ff6b35', 15);
             }
             
-            takeDamage(damage, attacker) {
+            takeDamage(damage, attacker, hitbox = 'body') {
                 if (this.state === 'ko') return;
                 
                 let actualDamage = damage;
                 
+                // Apply hitbox multiplier
+                if (hitbox === 'head') {
+                    actualDamage *= 1.5; // Headshots do 1.5x damage
+                } else if (hitbox === 'leg') {
+                    actualDamage *= 0.75; // Leg hits do 0.75x damage
+                }
+                
                 if (this.isBlocking) {
-                    actualDamage *= BLOCK_REDUCTION;
+                    actualDamage *= (1 - this.blockReduction);
                     createParticles(this.x + this.width / 2, this.y + this.height / 2, '#4444ff', 8);
                 } else {
                     this.hitStun = 10;
@@ -1079,12 +1163,47 @@
                 updateHealthBars();
             }
             
+            getHitbox(hitY) {
+                // Determine which hitbox was hit based on attack height
+                const headTop = this.y - 30;
+                const headBottom = this.y;
+                const bodyTop = this.y;
+                const bodyBottom = this.y + 50;
+                const legTop = this.y + 50;
+                const legBottom = this.y + this.height;
+                
+                // Adjust hitboxes when crouching
+                if (this.isCrouching) {
+                    if (hitY >= legTop - 20 && hitY <= legBottom) return 'leg';
+                    if (hitY >= bodyTop - 20 && hitY <= legTop - 20) return 'body';
+                    return 'body'; // Crouching makes head harder to hit
+                }
+                
+                // Adjust hitboxes when jumping
+                if (this.state === 'jumping') {
+                    if (hitY >= headTop && hitY <= headBottom) return 'head';
+                    if (hitY >= bodyTop && hitY <= bodyBottom) return 'body';
+                    if (hitY >= legTop && hitY <= legBottom) return 'leg';
+                }
+                
+                // Normal stance
+                if (hitY >= headTop && hitY <= headBottom) return 'head';
+                if (hitY >= bodyTop && hitY <= bodyBottom) return 'body';
+                if (hitY >= legTop && hitY <= legBottom) return 'leg';
+                
+                return 'body'; // Default
+            }
+            
             draw() {
                 ctx.save();
                 
                 // Determine color based on player
-                const primaryColor = this.isPlayer1 ? '#552583' : '#98002e'; // Lakers purple vs Heat red
-                const secondaryColor = this.isPlayer1 ? '#fdb927' : '#000000'; // Lakers gold vs Heat black
+                const primaryColor = this.isPlayer1 ? '#552583' : (this.opponentColor || '#98002e');
+                const secondaryColor = this.isPlayer1 ? '#fdb927' : '#000000';
+                
+                // Adjust height when crouching
+                const drawHeight = this.isCrouching ? this.height * 0.6 : this.height;
+                const drawY = this.isCrouching ? this.y + (this.height - drawHeight) : this.y;
                 
                 // Draw shadow
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -1094,9 +1213,9 @@
                 
                 // Flip for direction
                 if (this.direction < 0) {
-                    ctx.translate(this.x + this.width, this.y);
+                    ctx.translate(this.x + this.width, drawY);
                     ctx.scale(-1, 1);
-                    ctx.translate(-this.x, -this.y);
+                    ctx.translate(-this.x, -drawY);
                 }
                 
                 // Flash effect when hit
@@ -1106,37 +1225,39 @@
                 
                 // Draw body
                 ctx.fillStyle = primaryColor;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillRect(this.x, drawY, this.width, drawHeight);
                 
                 // Draw number 23
                 ctx.fillStyle = secondaryColor;
                 ctx.font = 'bold 20px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('23', this.x + this.width / 2, this.y + 45);
+                ctx.fillText('23', this.x + this.width / 2, drawY + drawHeight / 2 + 5);
                 
-                // Draw head
+                // Draw head (adjusted for crouch)
+                const headY = this.isCrouching ? drawY - 10 : this.y - 15;
                 ctx.fillStyle = '#8B4513';
                 ctx.beginPath();
-                ctx.arc(this.x + this.width / 2, this.y - 15, 18, 0, Math.PI * 2);
+                ctx.arc(this.x + this.width / 2, headY, 18, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Draw crown
                 ctx.font = '20px Arial';
-                ctx.fillText('👑', this.x + this.width / 2, this.y - 25);
+                ctx.fillText('👑', this.x + this.width / 2, headY - 10);
                 
                 // Draw attack indicators
                 if (this.state === 'attacking' && this.attackFrame < 8) {
-                    ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+                    ctx.fillStyle = this.attackType === 'ultimate' ? 'rgba(255, 215, 0, 0.7)' : 'rgba(255, 255, 0, 0.5)';
                     const attackX = this.x + (this.direction > 0 ? this.width : -30);
-                    const attackY = this.attackType === 'kick' ? this.y + 40 : this.y + 20;
-                    ctx.fillRect(attackX, attackY, 30, 20);
+                    const attackY = this.attackType === 'kick' ? drawY + drawHeight * 0.7 : drawY + drawHeight * 0.3;
+                    const attackWidth = this.attackType === 'ultimate' ? 50 : 30;
+                    ctx.fillRect(attackX, attackY, attackWidth, 20);
                 }
                 
                 // Draw blocking indicator
                 if (this.isBlocking) {
                     ctx.strokeStyle = '#4444ff';
                     ctx.lineWidth = 3;
-                    ctx.strokeRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
+                    ctx.strokeRect(this.x - 5, drawY - 5, this.width + 10, drawHeight + 10);
                 }
                 
                 ctx.restore();
@@ -1246,12 +1367,22 @@
                 
                 if (distance < attackRange && Math.abs(player1.y - player2.y) < 80) {
                     let damage = 0;
-                    if (player1.attackType === 'punch') damage = player1.punchDamage;
-                    else if (player1.attackType === 'kick') damage = player1.kickDamage;
-                    else if (player1.attackType === 'ultimate') damage = player1.ultimateDamage;
+                    let attackY = player1.y + 20;
+                    
+                    if (player1.attackType === 'punch') {
+                        damage = player1.punchDamage;
+                        attackY = player1.y + 20; // Upper body attack
+                    } else if (player1.attackType === 'kick') {
+                        damage = player1.kickDamage;
+                        attackY = player1.y + 60; // Lower body attack
+                    } else if (player1.attackType === 'ultimate') {
+                        damage = player1.ultimateDamage;
+                        attackY = player1.y + 40; // Mid-body attack
+                    }
                     
                     if (damage > 0 && player1.attackFrame === 5) {
-                        player2.takeDamage(damage, player1);
+                        const hitbox = player2.getHitbox(attackY);
+                        player2.takeDamage(damage, player1, hitbox);
                     }
                 }
             }
@@ -1263,12 +1394,22 @@
                 
                 if (distance < attackRange && Math.abs(player2.y - player1.y) < 80) {
                     let damage = 0;
-                    if (player2.attackType === 'punch') damage = player2.punchDamage;
-                    else if (player2.attackType === 'kick') damage = player2.kickDamage;
-                    else if (player2.attackType === 'ultimate') damage = player2.ultimateDamage;
+                    let attackY = player2.y + 20;
+                    
+                    if (player2.attackType === 'punch') {
+                        damage = player2.punchDamage;
+                        attackY = player2.y + 20;
+                    } else if (player2.attackType === 'kick') {
+                        damage = player2.kickDamage;
+                        attackY = player2.y + 60;
+                    } else if (player2.attackType === 'ultimate') {
+                        damage = player2.ultimateDamage;
+                        attackY = player2.y + 40;
+                    }
                     
                     if (damage > 0 && player2.attackFrame === 5) {
-                        player1.takeDamage(damage, player2);
+                        const hitbox = player1.getHitbox(attackY);
+                        player1.takeDamage(damage, player2, hitbox);
                     }
                 }
             }
@@ -1287,7 +1428,8 @@
                 );
                 
                 if (hit) {
-                    opponent.takeDamage(proj.damage, proj.owner);
+                    const hitbox = opponent.getHitbox(proj.y);
+                    opponent.takeDamage(proj.damage, proj.owner, hitbox);
                     return false;
                 }
                 
@@ -1405,8 +1547,9 @@
             player1 = new Fighter(true, false);
             player2 = new Fighter(false, mode === '1P');
             
-            player1.wins = 0;
-            player2.wins = 0;
+            // Don't reset wins - they persist between rounds
+            if (!player1.wins) player1.wins = 0;
+            if (!player2.wins) player2.wins = 0;
             
             startRound();
             
@@ -1421,14 +1564,25 @@
         }
 
         function startRound() {
+            // Preserve wins before reset
+            const p1Wins = player1 ? player1.wins : 0;
+            const p2Wins = player2 ? player2.wins : 0;
+            
             player1.reset();
             player2.reset();
+            
+            // Restore wins
+            player1.wins = p1Wins;
+            player2.wins = p2Wins;
+            
             roundTime = ROUND_TIME;
             roundStartTime = Date.now();
             comboCounter = 0;
             comboTimer = 0;
             
             document.getElementById('roundIndicator').textContent = `ROUND ${currentRound}`;
+            updateOpponentLabels();
+            updateWinDots();
             
             // Show round screen
             document.getElementById('roundTitle').textContent = `ROUND ${currentRound}`;
@@ -1460,6 +1614,22 @@
             
             document.getElementById('player1Special').style.width = p1SpecialPercent + '%';
             document.getElementById('player2Special').style.width = p2SpecialPercent + '%';
+            
+            // Show/hide ultimate buttons
+            const p1UltBtn = document.getElementById('player1UltimateBtn');
+            const p2UltBtn = document.getElementById('player2UltimateBtn');
+            
+            if (player1.specialMeter >= 100) {
+                p1UltBtn.classList.remove('hidden');
+            } else {
+                p1UltBtn.classList.add('hidden');
+            }
+            
+            if (player2.specialMeter >= 100 && !player2.isAI) {
+                p2UltBtn.classList.remove('hidden');
+            } else {
+                p2UltBtn.classList.add('hidden');
+            }
         }
         
         function updateWinDots() {
@@ -1613,21 +1783,24 @@
         function updateShopUI() {
             // Update stat displays
             document.getElementById('statAttack').textContent = playerData.attackLevel;
-            document.getElementById('statHealth').textContent = MAX_HEALTH * playerData.healthLevel;
+            document.getElementById('statHealth').textContent = MAX_HEALTH + (playerData.healthLevel - 1) * 20;
             document.getElementById('statSpeed').textContent = playerData.speedLevel;
             document.getElementById('statSpecial').textContent = playerData.specialLevel;
+            document.getElementById('statBlock').textContent = playerData.blockLevel;
             
             // Update stat bars
             document.getElementById('statAttackBar').style.width = (playerData.attackLevel * 20) + '%';
             document.getElementById('statHealthBar').style.width = (playerData.healthLevel * 20) + '%';
             document.getElementById('statSpeedBar').style.width = (playerData.speedLevel * 20) + '%';
             document.getElementById('statSpecialBar').style.width = (playerData.specialLevel * 20) + '%';
+            document.getElementById('statBlockBar').style.width = (playerData.blockLevel * 20) + '%';
             
             // Update shop items
             updateShopItem('attack', playerData.attackLevel);
             updateShopItem('health', playerData.healthLevel);
             updateShopItem('speed', playerData.speedLevel);
             updateShopItem('special', playerData.specialLevel);
+            updateShopItem('block', playerData.blockLevel);
         }
         
         function updateShopItem(type, level) {
@@ -1674,14 +1847,21 @@
         function showMainMenu() {
             document.getElementById('mainMenu').classList.remove('hidden');
             document.getElementById('levelSelect').classList.add('hidden');
+            document.getElementById('ultimateSelect').classList.add('hidden');
             document.getElementById('shopScreen').classList.add('hidden');
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('coinsDisplay').classList.remove('hidden');
             gameState = 'mainMenu';
         }
         
-        function showLevelSelect() {
+        function showUltimateSelect() {
             document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('ultimateSelect').classList.remove('hidden');
+            updateUltimateSelect();
+        }
+        
+        function showLevelSelect() {
+            document.getElementById('ultimateSelect').classList.add('hidden');
             document.getElementById('levelSelect').classList.remove('hidden');
             updateLevelSelect();
         }
@@ -1690,6 +1870,31 @@
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('shopScreen').classList.remove('hidden');
             updateShopUI();
+        }
+        
+        function updateUltimateSelect() {
+            // Highlight the currently selected ultimate
+            document.querySelectorAll('.select-ultimate-btn').forEach(btn => {
+                const ultimateId = btn.getAttribute('data-ultimate');
+                if (ultimateId === playerData.selectedUltimate) {
+                    btn.textContent = 'SELECTED ✓';
+                    btn.style.background = '#fdb927';
+                    btn.style.color = '#552583';
+                } else {
+                    btn.textContent = 'SELECT';
+                    btn.style.background = '#552583';
+                    btn.style.color = '#fdb927';
+                }
+            });
+        }
+        
+        function updateOpponentLabels() {
+            if (gameMode === '1P' && player2) {
+                const levelConfig = LEVEL_CONFIG[currentLevel];
+                document.getElementById('player2Label').textContent = levelConfig.opponentName.toUpperCase();
+            } else {
+                document.getElementById('player2Label').textContent = 'HEAT LEBRON';
+            }
         }
         
         function buyUpgrade(type) {
@@ -1767,11 +1972,30 @@
         
         // Main menu buttons
         document.getElementById('startCampaignButton').addEventListener('click', () => {
-            showLevelSelect();
+            showUltimateSelect();
         });
         
         document.getElementById('shopButton').addEventListener('click', () => {
             showShop();
+        });
+        
+        // Ultimate select
+        document.querySelectorAll('.select-ultimate-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const ultimateId = btn.getAttribute('data-ultimate');
+                playerData.selectedUltimate = ultimateId;
+                savePlayerData();
+                updateUltimateSelect();
+            });
+        });
+        
+        document.getElementById('continueToLevelSelect').addEventListener('click', () => {
+            showLevelSelect();
+        });
+        
+        document.getElementById('backFromUltimateSelect').addEventListener('click', () => {
+            showMainMenu();
         });
         
         // Level select
@@ -1788,7 +2012,8 @@
         });
         
         document.getElementById('backFromLevelSelect').addEventListener('click', () => {
-            showMainMenu();
+            document.getElementById('levelSelect').classList.add('hidden');
+            document.getElementById('ultimateSelect').classList.remove('hidden');
         });
         
         // Shop buttons
@@ -1796,9 +2021,25 @@
         document.getElementById('buyHealth').addEventListener('click', () => buyUpgrade('health'));
         document.getElementById('buySpeed').addEventListener('click', () => buyUpgrade('speed'));
         document.getElementById('buySpecial').addEventListener('click', () => buyUpgrade('special'));
+        document.getElementById('buyBlock').addEventListener('click', () => buyUpgrade('block'));
         
         document.getElementById('backFromShop').addEventListener('click', () => {
             showMainMenu();
+        });
+        
+        // Ultimate buttons
+        document.getElementById('player1UltimateBtn').addEventListener('click', () => {
+            if (player1 && player1.specialMeter >= 100) {
+                keys['KeyU'] = true;
+                setTimeout(() => { keys['KeyU'] = false; }, 100);
+            }
+        });
+        
+        document.getElementById('player2UltimateBtn').addEventListener('click', () => {
+            if (player2 && !player2.isAI && player2.specialMeter >= 100) {
+                keys['KeyI'] = true;
+                setTimeout(() => { keys['KeyI'] = false; }, 100);
+            }
         });
 
         // Initialize touch controls
