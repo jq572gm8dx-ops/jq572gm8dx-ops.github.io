@@ -303,7 +303,17 @@
             canMove(dx, dy) {
                 const c = this.getCol() + dx;
                 const r = this.getRow() + dy;
-                if (r < 0 || r >= map.length || c < 0 || c >= map[0].length) return false;
+                if (r < 0 || r >= map.length) return false;
+
+                // Horizontal tunnel wrap: allow stepping off the left/right edge if the destination edge tile is not a wall.
+                if (dy === 0 && c < 0) {
+                    return map[r][map[0].length - 1] !== 1;
+                }
+                if (dy === 0 && c >= map[0].length) {
+                    return map[r][0] !== 1;
+                }
+
+                if (c < 0 || c >= map[0].length) return false;
                 return map[r][c] !== 1;
             }
             move() {
@@ -399,48 +409,63 @@
         }
 
         class HoopGhost extends Entity {
-            constructor(c, r, color, delay) {
+            constructor(c, r, color, spawnBoxIndex, spawnWave) {
                 super(c, r);
                 this.color = color;
                 this.scared = false;
                 this.active = false;
-                this.speed = TILE_SIZE / 10;
-                setTimeout(() => { 
-                    this.active = true; 
-                    // give a small nudge so ghosts don't remain with a zero direction when they activate
-                    if (this.dir.x === 0 && this.dir.y === 0) this.dir = (Math.random() > 0.5) ? {x:1,y:0} : {x:0,y:-1};
-                }, delay);
+                this.baseSpeed = TILE_SIZE / 10;
+                this.speed = this.baseSpeed;
+                this._stuckFrames = 0;
+                this._lastX = this.x;
+                this._lastY = this.y;
+
+                this.spawnCol = c;
+                this.spawnRow = r;
+                this.spawnBoxIndex = spawnBoxIndex; // 0=left, 1=middle, 2=right
+                this.spawnWave = spawnWave; // 0 or 1 (first/second ghost from that box)
+                this._queuedForRelease = false;
+
+                this.leavingSpawn = true;
+            }
+
+            activateNow() {
+                this.active = true;
+                this._queuedForRelease = false;
+                this.scared = false;
+                this.leavingSpawn = true;
+                // start from a clean state so the first move is decided by spawn-exit logic
+                this.dir = { x: 0, y: 0 };
+                this.nextDir = { x: 0, y: 0 };
+                // give a small nudge so ghosts don't remain with a zero direction
+                if (this.dir.x === 0 && this.dir.y === 0) this.dir = (Math.random() > 0.5) ? {x:1,y:0} : {x:0,y:-1};
             }
             update() {
                 if (!this.active) return;
+                // Use Entity.move() so ghosts get: wall-stop, clean turning at centers, and tunnel warp
+                this.speed = this.scared ? this.baseSpeed * 0.5 : this.baseSpeed;
+
+                // Once we reach a non-spawn tile, stop forcing the spawn-exit behavior
+                if (this.leavingSpawn) {
+                    const rr = this.getRow();
+                    const cc = this.getCol();
+                    if (map[rr] && map[rr][cc] !== 9) this.leavingSpawn = false;
+                }
+
+                // Simple stuck detector: if we aren't moving for a while, force a re-pick at next center
+                const movedDist = Math.hypot(this.x - this._lastX, this.y - this._lastY);
+                if (movedDist < 0.01) this._stuckFrames++;
+                else this._stuckFrames = 0;
+                this._lastX = this.x;
+                this._lastY = this.y;
+
                 const centerX = this.getCol() * TILE_SIZE + TILE_SIZE/2;
                 const centerY = this.getRow() * TILE_SIZE + TILE_SIZE/2;
                 const dist = Math.sqrt((this.x-centerX)**2 + (this.y-centerY)**2);
 
-                // helper: limited BFS to determine if starting from (sr,sc) we can reach a non-9 tile
-                const canReachNonSpawn = (sr, sc, maxDepth = 12) => {
-                    const rows = map.length;
-                    const cols = map[0].length;
-                    const q = [{r: sr, c: sc, d: 0}];
-                    const seen = Array(rows).fill(0).map(() => Array(cols).fill(false));
-                    seen[sr][sc] = true;
-                    while (q.length) {
-                        const cur = q.shift();
-                        const v = map[cur.r] && map[cur.r][cur.c];
-                        if (v === undefined) continue;
-                        if (v !== 9) return true; // found exit
-                        if (cur.d >= maxDepth) continue;
-                        const neigh = [{r:cur.r-1,c:cur.c},{r:cur.r+1,c:cur.c},{r:cur.r,c:cur.c-1},{r:cur.r,c:cur.c+1}];
-                        for (let n of neigh) {
-                            if (n.r < 0 || n.r >= rows || n.c < 0 || n.c >= cols) continue;
-                            if (seen[n.r][n.c]) continue;
-                            if (map[n.r][n.c] === 1) continue; // wall blocks
-                            seen[n.r][n.c] = true;
-                            q.push({r: n.r, c: n.c, d: cur.d + 1});
-                        }
-                    }
-                    return false;
-                };
+                const curR = this.getRow();
+                const curC = this.getCol();
+                const inSpawn = (map[curR] && map[curR][curC] === 9);
 
                 if (dist < this.speed) {
                     this.x = centerX;
@@ -448,21 +473,19 @@
                     const validMoves = [];
                     const exitMoves = [];
                     const dirs = [{x:0,y:-1}, {x:0,y:1}, {x:-1,y:0}, {x:1,y:0}];
-                    const inSpawn = (map[this.getRow()] && map[this.getRow()][this.getCol()] === 9);
+
+                    const row = this.getRow();
+                    const col = this.getCol();
 
                     dirs.forEach(d => {
                         if (this.canMove(d.x, d.y)) {
                             validMoves.push(d);
-                            const nr = this.getRow() + d.y;
-                            const nc = this.getCol() + d.x;
-                            // prefer directions that lead (possibly through contiguous 9s) to a non-9 tile
+                            const nr = row + d.y;
+                            const nc = col + d.x;
+                            // prefer directions that don't go into spawn tiles (once we're outside)
                             if (!inSpawn) {
-                                // if not in spawn, any move is fine — but prefer moves that don't go into 9 if possible
                                 const tileAhead = (map[nr] && map[nr][nc] !== undefined) ? map[nr][nc] : 1;
                                 if (tileAhead !== 9) exitMoves.push(d);
-                            } else {
-                                // if inside spawn, run BFS from the neighbor to see if it leads out of spawn
-                                if (canReachNonSpawn(nr, nc, 12)) exitMoves.push(d);
                             }
                         }
                     });
@@ -470,38 +493,79 @@
                     let choices = validMoves;
                     if (exitMoves.length > 0) choices = exitMoves;
 
+                    // Avoid instant reversal unless it's the only way
+                    const rev = {x: -this.dir.x, y: -this.dir.y};
+                    const nonReverse = choices.filter(d => !(d.x === rev.x && d.y === rev.y));
+                    if (nonReverse.length > 0) choices = nonReverse;
+
                     if (choices.length > 0) {
-                        if (this.scared) {
-                            this.dir = choices[Math.floor(Math.random() * choices.length)];
-                        } else if (Math.random() > 0.3 && player) {
-                            // choose best direction that minimizes Manhattan distance to player
-                            let bestDir = choices[0];
-                            let minD = 99999;
-                            choices.forEach(d => {
-                                const nextX = this.x + d.x * TILE_SIZE;
-                                const nextY = this.y + d.y * TILE_SIZE;
-                                const distToP = Math.abs(nextX - player.x) + Math.abs(nextY - player.y);
-                                if (distToP < minD) { minD = distToP; bestDir = d; }
+                        if ((inSpawn || this.leavingSpawn) && validMoves.length > 0) {
+                            // First priority: leave spawn. Choose the move that reaches a non-9 tile fastest.
+                            let bestDir = validMoves[0];
+                            let bestDist = Infinity;
+                            for (const d of validMoves) {
+                                const nr = row + d.y;
+                                const nc = col + d.x;
+                                const id = _idx(nr, nc);
+                                const dd = (_exitDist && _exitDist[id] >= 0) ? _exitDist[id] : Infinity;
+                                if (dd < bestDist) { bestDist = dd; bestDir = d; }
+                            }
+                            // tie-break: prefer continuing forward, then avoid reversing
+                            const candidates = validMoves.filter(d => {
+                                const nr = row + d.y;
+                                const nc = col + d.x;
+                                const id = _idx(nr, nc);
+                                const dd = (_exitDist && _exitDist[id] >= 0) ? _exitDist[id] : Infinity;
+                                return dd === bestDist;
                             });
-                            this.dir = bestDir;
+                            if (candidates.length > 1) {
+                                // prefer current direction if valid
+                                const forward = candidates.find(d => d.x === this.dir.x && d.y === this.dir.y);
+                                if (forward) bestDir = forward;
+                                else {
+                                    const rev2 = {x: -this.dir.x, y: -this.dir.y};
+                                    const nonRev2 = candidates.filter(d => !(d.x === rev2.x && d.y === rev2.y));
+                                    if (nonRev2.length > 0) bestDir = nonRev2[0];
+                                    else bestDir = candidates[0];
+                                }
+                            }
+                            this.nextDir = bestDir;
+                        } else if (this.scared || !player) {
+                            // scared: random movement
+                            this.nextDir = choices[Math.floor(Math.random() * choices.length)];
                         } else {
-                            this.dir = choices[Math.floor(Math.random() * choices.length)];
+                            // Chase using shared shortest-path distance map (wall-aware)
+                            let bestDir = choices[0];
+                            let bestDist = Infinity;
+                            for (const d of choices) {
+                                const nr = row + d.y;
+                                const nc = col + d.x;
+                                const id = _idx(nr, nc);
+                                const dd = (_playerDist && _playerDist[id] >= 0) ? _playerDist[id] : Infinity;
+                                if (dd < bestDist) { bestDist = dd; bestDir = d; }
+                            }
+
+                            this.nextDir = bestDir;
                         }
                     } else {
                         // No available choices: try reversing first, then any valid move
-                        const rev = {x: -this.dir.x, y: -this.dir.y};
                         if ((this.dir.x !== 0 || this.dir.y !== 0) && this.canMove(rev.x, rev.y)) {
-                            this.dir = rev;
+                            this.nextDir = rev;
                         } else {
                             for (let d of dirs) {
-                                if (this.canMove(d.x, d.y)) { this.dir = d; break; }
+                                if (this.canMove(d.x, d.y)) { this.nextDir = d; break; }
                             }
                         }
                     }
+
+                    // If we've been stuck, force a random valid direction at the center
+                    if (this._stuckFrames > 30 && validMoves.length > 0) {
+                        this.nextDir = validMoves[Math.floor(Math.random() * validMoves.length)];
+                        this._stuckFrames = 0;
+                    }
                 }
 
-                this.x += this.dir.x * (this.scared ? this.speed * 0.5 : this.speed);
-                this.y += this.dir.y * (this.scared ? this.speed * 0.5 : this.speed);
+                this.move();
             }
             draw(ctx) {
                 const r = this.radius;
@@ -558,6 +622,191 @@
         let powerTimer = 0;
         let ghostCombo = 0;
 
+        // --- Ghost release scheduler (10s interval, left->middle->right, repeat) ---
+        const GHOST_RELEASE_INTERVAL_MS = 10000;
+        let _ghostReleaseTimer = null;
+        let _ghostReleaseOrderIndex = 0;
+        let _ghostReleaseQueues = [[], [], []];
+
+        function resetGhostReleaseScheduler() {
+            if (_ghostReleaseTimer) {
+                clearTimeout(_ghostReleaseTimer);
+                _ghostReleaseTimer = null;
+            }
+            _ghostReleaseOrderIndex = 0;
+            _ghostReleaseQueues = [[], [], []];
+        }
+
+        function enqueueGhostForRelease(g) {
+            if (!g || g._queuedForRelease) return;
+            g._queuedForRelease = true;
+            const idx = Math.max(0, Math.min(2, g.spawnBoxIndex || 0));
+            _ghostReleaseQueues[idx].push(g);
+            if (!_ghostReleaseTimer) {
+                _ghostReleaseTimer = setTimeout(processGhostReleaseTick, 0);
+            }
+        }
+
+        function processGhostReleaseTick() {
+            const q = _ghostReleaseQueues[_ghostReleaseOrderIndex];
+            if (q && q.length > 0) {
+                const g = q.shift();
+                if (g) g.activateNow();
+            }
+            _ghostReleaseOrderIndex = (_ghostReleaseOrderIndex + 1) % 3;
+            _ghostReleaseTimer = setTimeout(processGhostReleaseTick, GHOST_RELEASE_INTERVAL_MS);
+        }
+
+        function respawnGhost(g) {
+            if (!g) return;
+            g.active = false;
+            g.scared = false;
+            g.leavingSpawn = true;
+            g.dir = { x: 0, y: 0 };
+            g.nextDir = { x: 0, y: 0 };
+            g.x = g.spawnCol * TILE_SIZE + TILE_SIZE / 2;
+            g.y = g.spawnRow * TILE_SIZE + TILE_SIZE / 2;
+            enqueueGhostForRelease(g);
+        }
+
+        // --- Shared pathfinding caches (prevents per-ghost BFS stutter) ---
+        let _rows = 0;
+        let _cols = 0;
+        let _exitDist = null;   // Int16Array distance to nearest non-9 tile (0 outside spawn)
+        let _playerDist = null; // Int16Array distance to player's tile
+        let _bfsQueue = null;   // Int32Array queue
+        let _playerDistKey = '';
+
+        function _idx(r, c) { return r * _cols + c; }
+
+        function _allocDistCachesIfNeeded() {
+            if (!map || !map.length) return;
+            _rows = map.length;
+            _cols = map[0].length;
+            const size = _rows * _cols;
+            if (!_exitDist || _exitDist.length !== size) {
+                _exitDist = new Int16Array(size);
+                _playerDist = new Int16Array(size);
+                _bfsQueue = new Int32Array(size);
+            }
+        }
+
+        function _isWall(r, c) {
+            if (r < 0 || r >= _rows || c < 0 || c >= _cols) return true;
+            return map[r][c] === 1;
+        }
+
+        // Multi-source BFS: distance to nearest non-spawn tile (tile != 9), ignoring walls.
+        function buildExitDistanceMap() {
+            _allocDistCachesIfNeeded();
+            const size = _rows * _cols;
+            _exitDist.fill(-1);
+            let head = 0;
+            let tail = 0;
+
+            // Sources: any walkable, non-9 tile
+            for (let r = 0; r < _rows; r++) {
+                for (let c = 0; c < _cols; c++) {
+                    const t = map[r][c];
+                    if (t !== 1 && t !== 9) {
+                        const id = _idx(r, c);
+                        _exitDist[id] = 0;
+                        _bfsQueue[tail++] = id;
+                    }
+                }
+            }
+
+            while (head < tail) {
+                const cur = _bfsQueue[head++];
+                const r = (cur / _cols) | 0;
+                const c = cur - r * _cols;
+                const d0 = _exitDist[cur];
+
+                // up/down
+                if (r > 0 && !_isWall(r - 1, c)) {
+                    const ni = cur - _cols;
+                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+                if (r + 1 < _rows && !_isWall(r + 1, c)) {
+                    const ni = cur + _cols;
+                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+
+                // left/right (with tunnel wrap)
+                if (c > 0 && !_isWall(r, c - 1)) {
+                    const ni = cur - 1;
+                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                } else if (c === 0 && !_isWall(r, _cols - 1)) {
+                    const ni = cur + (_cols - 1);
+                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+
+                if (c + 1 < _cols && !_isWall(r, c + 1)) {
+                    const ni = cur + 1;
+                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                } else if (c === _cols - 1 && !_isWall(r, 0)) {
+                    const ni = cur - (_cols - 1);
+                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+            }
+        }
+
+        // Single-source BFS from player tile; recomputed only when player changes tiles.
+        function updatePlayerDistanceMapIfNeeded() {
+            if (!player) return;
+            _allocDistCachesIfNeeded();
+
+            const pr = player.getRow();
+            const pc = player.getCol();
+            const key = pr + ',' + pc;
+            if (key === _playerDistKey) return;
+            _playerDistKey = key;
+
+            const size = _rows * _cols;
+            _playerDist.fill(-1);
+            if (_isWall(pr, pc)) return;
+
+            let head = 0;
+            let tail = 0;
+            const start = _idx(pr, pc);
+            _playerDist[start] = 0;
+            _bfsQueue[tail++] = start;
+
+            while (head < tail) {
+                const cur = _bfsQueue[head++];
+                const r = (cur / _cols) | 0;
+                const c = cur - r * _cols;
+                const d0 = _playerDist[cur];
+
+                // up/down
+                if (r > 0 && !_isWall(r - 1, c)) {
+                    const ni = cur - _cols;
+                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+                if (r + 1 < _rows && !_isWall(r + 1, c)) {
+                    const ni = cur + _cols;
+                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+
+                // left/right (with tunnel wrap)
+                if (c > 0 && !_isWall(r, c - 1)) {
+                    const ni = cur - 1;
+                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                } else if (c === 0 && !_isWall(r, _cols - 1)) {
+                    const ni = cur + (_cols - 1);
+                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+
+                if (c + 1 < _cols && !_isWall(r, c + 1)) {
+                    const ni = cur + 1;
+                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                } else if (c === _cols - 1 && !_isWall(r, 0)) {
+                    const ni = cur - (_cols - 1);
+                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
+                }
+            }
+        }
+
         function init() {
             if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) {
                 document.getElementById('controls-hint').innerText = "CONTROLS BOTTOM RIGHT";
@@ -604,22 +853,39 @@
             scoreEl.innerText = 0;
             player = new PacBron(10, 15);
             player.nextDir = {x:1, y:0};
-            // Find all spawn boxes (tile value 9) and spawn three ghosts in each
-            const ghostColors = ['#ff0000', '#00ff00', '#0000ff', '#ffb347', '#ff69b4', '#00ffff', '#ff00ff', '#a52a2a', '#8a2be2', '#228b22', '#ffd700', '#ff1493'];
+
+            // Build shared exit-distance map once per level
+            buildExitDistanceMap();
+            // Find spawn boxes (runs of tile value 9) and spawn two ghosts in each (3 boxes => 6 ghosts total)
+            // Release order (10s interval): left, middle, right, then left, middle, right
+            const ghostColors = ['#ff0000', '#00ff00', '#0000ff', '#ffb347', '#ff69b4', '#00ffff', '#ff00ff', '#a52a2a', '#8a2be2',];
             let ghostIndex = 0;
             ghosts = [];
-            for (let r = 0; r < map.length; r++) {
+            const MAX_SPAWN_BOXES = 3;
+            const GHOST_RELEASE_INTERVAL_MS = 10000;
+            outer: for (let r = 0; r < map.length; r++) {
                 for (let c = 0; c < map[0].length; c++) {
-                    if (map[r][c] === 9) {
-                        for (let i =0; i < 1; i++) {
-                            ghosts.push(new HoopGhost(
-                                c, r,
-                                ghostColors[(ghostIndex + i) % ghostColors.length],
-                                (ghostIndex * 2000) + (i * 500)
-                            ));
-                        }
-                        ghostIndex++;
+                    if (map[r][c] !== 9) continue;
+
+                    // Treat a contiguous horizontal run of 9s as ONE spawn box
+                    const startC = c;
+                    let endC = c;
+                    while (endC + 1 < map[0].length && map[r][endC + 1] === 9) endC++;
+                    const centerC = Math.floor((startC + endC) / 2);
+
+                    for (let i = 0; i < 2; i++) {
+                        const releaseStep = (i * MAX_SPAWN_BOXES) + ghostIndex; // left->mid->right, then repeat
+                        const releaseDelay = releaseStep * GHOST_RELEASE_INTERVAL_MS;
+                        ghosts.push(new HoopGhost(
+                            centerC, r,
+                            ghostColors[(ghostIndex + i) % ghostColors.length],
+                            releaseDelay
+                        ));
                     }
+                    ghostIndex++;
+                    c = endC; // skip the rest of this run
+
+                    if (ghostIndex >= MAX_SPAWN_BOXES) break outer;
                 }
             }
             gameActive = true;
@@ -743,6 +1009,7 @@
                 }
             }
             player.update();
+            updatePlayerDistanceMapIfNeeded();
             ghosts.forEach(g => g.update());
             checkCollisions();
             draw();

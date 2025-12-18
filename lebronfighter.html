@@ -53,7 +53,7 @@
             image-rendering: pixelated;
         }
 
-        #startScreen, #roundScreen, #endScreen, #mainMenu, #shopScreen, #levelSelect, #ultimateSelect {
+        #startScreen, #roundScreen, #endScreen, #mainMenu, #campaignMenu, #shopScreen, #levelSelect, #ultimateSelect, #practiceSelect {
             position: absolute;
             top: 0;
             left: 0;
@@ -484,9 +484,54 @@
             
             <button id="startCampaignButton">CAMPAIGN MODE</button>
             <button id="start2PButtonMain">2 PLAYER VS</button>
-            <button id="shopButton">UPGRADE SHOP</button>
             <button onclick="window.location.href='lebronfighter-info.html'" style="background: #333; border-color: #666;">GAME INFO</button>
             <button onclick="window.location.href='index.html'" style="background: #333; border-color: #666;">BACK TO HOME</button>
+        </div>
+
+        <!-- Campaign Mode Menu -->
+        <div id="campaignMenu" class="hidden">
+            <h1 class="title-small">CAMPAIGN MODE</h1>
+            <p style="margin-bottom: 30px; font-size: 0.8rem;">SELECT AN OPTION</p>
+            
+            <button id="startCampaignButton2">FIGHT CAMPAIGN</button>
+            <button id="startPracticeButton">⚡ PRACTICE MODE</button>
+            <button id="shopButton">UPGRADE SHOP</button>
+            <button id="backFromCampaignMenu" style="background: #333; border-color: #666;">BACK TO MAIN MENU</button>
+        </div>
+
+        <!-- Practice Mode Select -->
+        <div id="practiceSelect" class="hidden">
+            <h1 class="title-small">⚡ PRACTICE MODE</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">TRAIN YOUR SKILLS WITH CUSTOMIZABLE DUMMIES</p>
+            
+            <div class="shop-grid">
+                <div class="shop-item" style="cursor: pointer;">
+                    <h4>🎯 STILL DUMMY</h4>
+                    <p>Stationary training dummy</p>
+                    <p style="color: #4fc3f7;">Perfect for combo practice</p>
+                    <button class="select-ultimate-btn" id="stillDummyBtn">SELECT</button>
+                </div>
+                <div class="shop-item" style="cursor: pointer;">
+                    <h4>⚔️ TRAINING DUMMY</h4>
+                    <p>Weak opponent that fights back</p>
+                    <p style="color: #4fc3f7;">Great for offense & defense</p>
+                    <button class="select-ultimate-btn" id="trainingDummyBtn">SELECT</button>
+                </div>
+            </div>
+            
+            <button id="backFromPracticeSelect" style="background: #333; border-color: #666; margin-top: 20px;">BACK TO MENU</button>
+        </div>
+
+        <!-- Practice Mode HUD -->
+        <div id="practiceHUD" class="hidden" style="position: absolute; top: 10px; left: 10px; right: 10px; color: #fdb927; font-size: 0.7rem; z-index: 15; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <div style="background: rgba(0,0,0,0.7); padding: 10px; border: 2px solid #fdb927;">
+                <div>COMBO: <span id="comboCount">0</span></div>
+                <div style="color: #4fc3f7;">DAMAGE: <span id="totalDamage">0</span></div>
+            </div>
+            <div style="background: rgba(0,0,0,0.7); padding: 10px; border: 2px solid #fdb927; text-align: center;">
+                <div id="ultimateProgress" style="font-size: 1.2rem;">▮▮▮▮▮ ULTIMATE: 100%</div>
+            </div>
+            <button id="exitPracticeBtn" style="background: #c41e3a; border: 2px solid #fdb927; color: #fdb927; padding: 5px 10px; font-size: 0.7rem; cursor: pointer;">EXIT PRACTICE</button>
         </div>
 
         <!-- Ultimate Select -->
@@ -897,6 +942,10 @@
                 // AI control
                 if (this.isAI && gameState === 'playing') {
                     this.updateAI(opponent);
+                } else if (this.ai && this.ai.decide) {
+                    // Handle practice dummy AI
+                    this.ai.decide();
+                    this.handleInput();
                 } else if (!this.isAI) {
                     this.handleInput();
                 }
@@ -935,6 +984,12 @@
             
             handleInput() {
                 if (this.hitStun > 0 || this.state === 'attacking') return;
+                
+                // Still dummy doesn't move or do anything
+                if (this.isStill) {
+                    this.state = 'idle';
+                    return;
+                }
                 
                 const controls = this.isPlayer1 ? 
                     { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', punch: 'KeyF', kick: 'KeyG', block: 'KeyH', ultimate: 'KeyU' } :
@@ -1137,6 +1192,13 @@
                             comboCounter = 1;
                         }
                         comboTimer = Date.now();
+                        
+                        // Track practice mode stats
+                        if (isPracticeMode && attacker === player1) {
+                            practiceCombo++;
+                            practiceTotalDamage += actualDamage;
+                            updatePracticeHUD();
+                        }
                     }
                 }
                 
@@ -1540,6 +1602,7 @@
         function gameLoop() {
             update();
             draw();
+            if (isPracticeMode) updatePracticeHUD();
             requestAnimationFrame(gameLoop);
         }
 
@@ -1661,6 +1724,31 @@
         }
         
         function endRound() {
+            // In practice mode, just reset without ending
+            if (isPracticeMode) {
+                roundActive = false;
+                setTimeout(() => {
+                    player1.reset();
+                    player2.reset();
+                    
+                    // Re-apply practice mode settings
+                    if (practiceMode === 'still') {
+                        player2.isTrainingDummy = true;
+                        player2.isStill = true;
+                        player2.name = '🎯 STILL';
+                    } else {
+                        player2.isTrainingDummy = true;
+                        player2.isStill = false;
+                        player2.name = '⚔️ TRAINING';
+                        player2.ai = createWeakAI();
+                    }
+                    
+                    practiceCombo = 0;
+                    roundActive = true;
+                }, 1500);
+                return;
+            }
+            
             gameState = 'roundEnd';
             
             // Determine winner
@@ -1873,7 +1961,12 @@
         }
         
         function showShop() {
-            document.getElementById('mainMenu').classList.add('hidden');
+            // Determine where we came from
+            if (document.getElementById('campaignMenu').classList.contains('hidden')) {
+                document.getElementById('mainMenu').classList.add('hidden');
+            } else {
+                document.getElementById('campaignMenu').classList.add('hidden');
+            }
             document.getElementById('shopScreen').classList.remove('hidden');
             updateShopUI();
         }
@@ -1978,8 +2071,150 @@
         
         // Main menu buttons
         document.getElementById('startCampaignButton').addEventListener('click', () => {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('campaignMenu').classList.remove('hidden');
+            gameState = 'campaignMenu';
+        });
+
+        document.getElementById('backFromCampaignMenu').addEventListener('click', () => {
+            document.getElementById('campaignMenu').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+            gameState = 'mainMenu';
+        });
+
+        document.getElementById('startCampaignButton2').addEventListener('click', () => {
+            document.getElementById('campaignMenu').classList.add('hidden');
             showUltimateSelect();
         });
+        
+        // Practice mode
+        let isPracticeMode = false;
+        let practiceMode = null; // 'still' or 'training'
+        let practiceCombo = 0;
+        let practiceTotalDamage = 0;
+        let practiceSessionStats = { maxCombo: 0, totalDamage: 0 };
+        
+        document.getElementById('startPracticeButton').addEventListener('click', () => {
+            document.getElementById('campaignMenu').classList.add('hidden');
+            document.getElementById('practiceSelect').classList.remove('hidden');
+            gameState = 'practiceSelect';
+        });
+
+        document.getElementById('backFromPracticeSelect').addEventListener('click', () => {
+            document.getElementById('practiceSelect').classList.add('hidden');
+            document.getElementById('campaignMenu').classList.remove('hidden');
+            gameState = 'campaignMenu';
+        });
+
+        document.getElementById('stillDummyBtn').addEventListener('click', () => {
+            isPracticeMode = true;
+            practiceMode = 'still';
+            startPracticeMode();
+        });
+
+        document.getElementById('trainingDummyBtn').addEventListener('click', () => {
+            isPracticeMode = true;
+            practiceMode = 'training';
+            startPracticeMode();
+        });
+        
+        function createWeakAI() {
+            return {
+                thinkCounter: 0,
+                thinkInterval: Math.random() * 30 + 40,
+                decide: function() {
+                    this.thinkCounter++;
+                    if (this.thinkCounter < this.thinkInterval) return;
+                    
+                    this.thinkCounter = 0;
+                    const rand = Math.random();
+                    
+                    // Clear previous keys
+                    keys['ArrowLeft'] = false;
+                    keys['ArrowRight'] = false;
+                    keys['ArrowUp'] = false;
+                    keys['ArrowDown'] = false;
+                    keys['KeyJ'] = false;
+                    keys['KeyK'] = false;
+                    keys['KeyL'] = false;
+                    keys['KeyI'] = false;
+                    
+                    if (rand < 0.4) {
+                        // Movement
+                        if (Math.random() > 0.5) {
+                            keys['ArrowLeft'] = true;
+                        } else {
+                            keys['ArrowRight'] = true;
+                        }
+                    } else if (rand < 0.6) {
+                        // Punch
+                        keys['KeyJ'] = true;
+                    } else if (rand < 0.75) {
+                        // Kick
+                        keys['KeyK'] = true;
+                    } else {
+                        // Block
+                        keys['KeyL'] = true;
+                    }
+                }
+            };
+        }
+        
+        function startPracticeMode() {
+            document.getElementById('practiceSelect').classList.add('hidden');
+            document.getElementById('practiceHUD').classList.remove('hidden');
+            document.getElementById('coinsDisplay').classList.add('hidden');
+            gameState = 'playing';
+            
+            practiceCombo = 0;
+            practiceTotalDamage = 0;
+            practiceSessionStats = { maxCombo: 0, totalDamage: 0 };
+            
+            player1.health = player1.maxHealth;
+            player2.health = player2.maxHealth;
+            
+            if (practiceMode === 'still') {
+                player2.isTrainingDummy = true;
+                player2.isStill = true;
+                player2.name = '🎯 STILL';
+            } else {
+                player2.isTrainingDummy = true;
+                player2.isStill = false;
+                player2.name = '⚔️ TRAINING';
+                player2.ai = createWeakAI();
+            }
+            
+            gameMode = 'practice';
+            roundStarted = true;
+            roundActive = true;
+        }
+
+        document.getElementById('exitPracticeBtn').addEventListener('click', () => {
+            isPracticeMode = false;
+            practiceMode = null;
+            gameState = 'mainMenu';
+            document.getElementById('practiceHUD').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('coinsDisplay').classList.add('hidden');
+            roundActive = false;
+            
+            alert(`✨ PRACTICE SESSION COMPLETE ✨\n\nMax Combo: ${practiceSessionStats.maxCombo}\nTotal Damage: ${practiceTotalDamage}\n\nKeep training to improve!`);
+        });
+        
+        function updatePracticeHUD() {
+            if (!isPracticeMode) return;
+            
+            document.getElementById('comboCount').textContent = practiceCombo;
+            document.getElementById('totalDamage').textContent = practiceTotalDamage;
+            
+            if (practiceSessionStats.maxCombo < practiceCombo) {
+                practiceSessionStats.maxCombo = practiceCombo;
+            }
+            
+            const ultimatePercent = Math.floor((player1.specialMeter / 100) * 5);
+            const bars = '▮'.repeat(ultimatePercent) + '▯'.repeat(5 - ultimatePercent);
+            document.getElementById('ultimateProgress').textContent = `${bars} ULTIMATE: ${Math.floor(player1.specialMeter)}%`;
+        }
         
         document.getElementById('shopButton').addEventListener('click', () => {
             showShop();
@@ -2030,7 +2265,13 @@
         document.getElementById('buyBlock').addEventListener('click', () => buyUpgrade('block'));
         
         document.getElementById('backFromShop').addEventListener('click', () => {
-            showMainMenu();
+            document.getElementById('shopScreen').classList.add('hidden');
+            // Return to campaign menu if it was visible, otherwise main menu
+            if (gameState === 'campaignMenu') {
+                document.getElementById('campaignMenu').classList.remove('hidden');
+            } else {
+                document.getElementById('mainMenu').classList.remove('hidden');
+            }
         });
         
         // Ultimate buttons
