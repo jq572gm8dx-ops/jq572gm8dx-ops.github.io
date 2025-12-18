@@ -846,10 +846,16 @@
         const ESTIMATED_GAME_DURATION_MINUTES = 3;
         
         // Practice mode constants
-        const TRAINING_DUMMY_REACTION_TIME = 120;
-        const DUMMY_AI_CONFIG = { aiSpeed: 2, difficulty: 0.3 };
-        const TRAINING_DUMMY_MEDIUM_ATTACK_CHANCE = 0.3;
-        const TRAINING_DUMMY_CLOSE_ATTACK_CHANCE = 0.2;
+        const TRAINING_DUMMY_CONFIG = {
+            reactionTime: 120,
+            aiSpeed: 2,
+            difficulty: 0.3,
+            mediumAttackChance: 0.3,
+            closeAttackChance: 0.2,
+            approachDistance: 250,
+            mediumDistance: 150
+        };
+        const DUMMY_AI_CONFIG = { aiSpeed: TRAINING_DUMMY_CONFIG.aiSpeed, difficulty: TRAINING_DUMMY_CONFIG.difficulty };
         
         // Level configuration
         const LEVEL_CONFIG = {
@@ -987,7 +993,7 @@
                     this.aiAction = 'idle';
                     if (this.isDummy && dummyType === 'fighting') {
                         // Weak training dummy settings
-                        this.aiReactionTime = TRAINING_DUMMY_REACTION_TIME;
+                        this.aiReactionTime = TRAINING_DUMMY_CONFIG.reactionTime;
                     } else if (gameMode === '1P') {
                         this.aiReactionTime = LEVEL_CONFIG[currentLevel].aiReactionTime;
                     } else {
@@ -1120,12 +1126,12 @@
                     
                     // Training dummy is very predictable and passive
                     if (this.isDummy && dummyType === 'fighting') {
-                        if (distance > 250) {
+                        if (distance > TRAINING_DUMMY_CONFIG.approachDistance) {
                             this.aiAction = 'approach';
-                        } else if (distance > 150) {
-                            this.aiAction = Math.random() < TRAINING_DUMMY_MEDIUM_ATTACK_CHANCE ? 'attack' : 'idle';
+                        } else if (distance > TRAINING_DUMMY_CONFIG.mediumDistance) {
+                            this.aiAction = Math.random() < TRAINING_DUMMY_CONFIG.mediumAttackChance ? 'attack' : 'idle';
                         } else {
-                            this.aiAction = Math.random() < TRAINING_DUMMY_CLOSE_ATTACK_CHANCE ? 'attack' : 'idle';
+                            this.aiAction = Math.random() < TRAINING_DUMMY_CONFIG.closeAttackChance ? 'attack' : 'idle';
                         }
                     } else {
                         // Normal AI behavior
@@ -1880,9 +1886,8 @@
         }
         
         function endRound() {
-            // Practice mode doesn't end on time or KO
+            // Practice mode doesn't end rounds - restart immediately to continue training
             if (gameMode === 'practice') {
-                // Just restart the round
                 startRound();
                 return;
             }
