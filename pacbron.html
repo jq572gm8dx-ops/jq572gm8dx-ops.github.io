@@ -223,6 +223,11 @@
         const C_FLOOR_1 = '#262626';
         const C_FLOOR_2 = '#2a2a2a';
 
+        // Ghost AI Constants
+        const MODE_SWITCH_INTERVAL = 400; // frames (~7 seconds at 60fps)
+        const AMBUSH_TILES_AHEAD = 4;
+        const PATROL_DISTANCE_THRESHOLD = 8; // in tiles
+
             const baseMap = [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -409,63 +414,49 @@
         }
 
         class HoopGhost extends Entity {
-            constructor(c, r, color, spawnBoxIndex, spawnWave) {
+            constructor(c, r, color, delay) {
                 super(c, r);
                 this.color = color;
+                this.personality = personality; // 'aggressive', 'ambush', 'random', 'patrol'
                 this.scared = false;
                 this.active = false;
-                this.baseSpeed = TILE_SIZE / 10;
-                this.speed = this.baseSpeed;
-                this._stuckFrames = 0;
-                this._lastX = this.x;
-                this._lastY = this.y;
-
-                this.spawnCol = c;
-                this.spawnRow = r;
-                this.spawnBoxIndex = spawnBoxIndex; // 0=left, 1=middle, 2=right
-                this.spawnWave = spawnWave; // 0 or 1 (first/second ghost from that box)
-                this._queuedForRelease = false;
-
-                this.leavingSpawn = true;
-            }
-
-            activateNow() {
-                this.active = true;
-                this._queuedForRelease = false;
-                this.scared = false;
-                this.leavingSpawn = true;
-                // start from a clean state so the first move is decided by spawn-exit logic
-                this.dir = { x: 0, y: 0 };
-                this.nextDir = { x: 0, y: 0 };
-                // give a small nudge so ghosts don't remain with a zero direction
-                if (this.dir.x === 0 && this.dir.y === 0) this.dir = (Math.random() > 0.5) ? {x:1,y:0} : {x:0,y:-1};
+                this.speed = TILE_SIZE / 10;
+                setTimeout(() => { 
+                    this.active = true; 
+                    // give a small nudge so ghosts don't remain with a zero direction when they activate
+                    if (this.dir.x === 0 && this.dir.y === 0) this.dir = (Math.random() > 0.5) ? {x:1,y:0} : {x:0,y:-1};
+                }, delay);
             }
             update() {
                 if (!this.active) return;
-                // Use Entity.move() so ghosts get: wall-stop, clean turning at centers, and tunnel warp
-                this.speed = this.scared ? this.baseSpeed * 0.5 : this.baseSpeed;
-
-                // Once we reach a non-spawn tile, stop forcing the spawn-exit behavior
-                if (this.leavingSpawn) {
-                    const rr = this.getRow();
-                    const cc = this.getCol();
-                    if (map[rr] && map[rr][cc] !== 9) this.leavingSpawn = false;
-                }
-
-                // Simple stuck detector: if we aren't moving for a while, force a re-pick at next center
-                const movedDist = Math.hypot(this.x - this._lastX, this.y - this._lastY);
-                if (movedDist < 0.01) this._stuckFrames++;
-                else this._stuckFrames = 0;
-                this._lastX = this.x;
-                this._lastY = this.y;
-
                 const centerX = this.getCol() * TILE_SIZE + TILE_SIZE/2;
                 const centerY = this.getRow() * TILE_SIZE + TILE_SIZE/2;
                 const dist = Math.sqrt((this.x-centerX)**2 + (this.y-centerY)**2);
 
-                const curR = this.getRow();
-                const curC = this.getCol();
-                const inSpawn = (map[curR] && map[curR][curC] === 9);
+                // helper: limited BFS to determine if starting from (sr,sc) we can reach a non-9 tile
+                const canReachNonSpawn = (sr, sc, maxDepth = 12) => {
+                    const rows = map.length;
+                    const cols = map[0].length;
+                    const q = [{r: sr, c: sc, d: 0}];
+                    const seen = Array(rows).fill(0).map(() => Array(cols).fill(false));
+                    seen[sr][sc] = true;
+                    while (q.length) {
+                        const cur = q.shift();
+                        const v = map[cur.r] && map[cur.r][cur.c];
+                        if (v === undefined) continue;
+                        if (v !== 9) return true; // found exit
+                        if (cur.d >= maxDepth) continue;
+                        const neigh = [{r:cur.r-1,c:cur.c},{r:cur.r+1,c:cur.c},{r:cur.r,c:cur.c-1},{r:cur.r,c:cur.c+1}];
+                        for (let n of neigh) {
+                            if (n.r < 0 || n.r >= rows || n.c < 0 || n.c >= cols) continue;
+                            if (seen[n.r][n.c]) continue;
+                            if (map[n.r][n.c] === 1) continue; // wall blocks
+                            seen[n.r][n.c] = true;
+                            q.push({r: n.r, c: n.c, d: cur.d + 1});
+                        }
+                    }
+                    return false;
+                };
 
                 if (dist < this.speed) {
                     this.x = centerX;
@@ -473,19 +464,21 @@
                     const validMoves = [];
                     const exitMoves = [];
                     const dirs = [{x:0,y:-1}, {x:0,y:1}, {x:-1,y:0}, {x:1,y:0}];
-
-                    const row = this.getRow();
-                    const col = this.getCol();
+                    const inSpawn = (map[this.getRow()] && map[this.getRow()][this.getCol()] === 9);
 
                     dirs.forEach(d => {
                         if (this.canMove(d.x, d.y)) {
                             validMoves.push(d);
-                            const nr = row + d.y;
-                            const nc = col + d.x;
-                            // prefer directions that don't go into spawn tiles (once we're outside)
+                            const nr = this.getRow() + d.y;
+                            const nc = this.getCol() + d.x;
+                            // prefer directions that lead (possibly through contiguous 9s) to a non-9 tile
                             if (!inSpawn) {
+                                // if not in spawn, any move is fine — but prefer moves that don't go into 9 if possible
                                 const tileAhead = (map[nr] && map[nr][nc] !== undefined) ? map[nr][nc] : 1;
                                 if (tileAhead !== 9) exitMoves.push(d);
+                            } else {
+                                // if inside spawn, run BFS from the neighbor to see if it leads out of spawn
+                                if (canReachNonSpawn(nr, nc, 12)) exitMoves.push(d);
                             }
                         }
                     });
@@ -493,79 +486,38 @@
                     let choices = validMoves;
                     if (exitMoves.length > 0) choices = exitMoves;
 
-                    // Avoid instant reversal unless it's the only way
-                    const rev = {x: -this.dir.x, y: -this.dir.y};
-                    const nonReverse = choices.filter(d => !(d.x === rev.x && d.y === rev.y));
-                    if (nonReverse.length > 0) choices = nonReverse;
-
                     if (choices.length > 0) {
-                        if ((inSpawn || this.leavingSpawn) && validMoves.length > 0) {
-                            // First priority: leave spawn. Choose the move that reaches a non-9 tile fastest.
-                            let bestDir = validMoves[0];
-                            let bestDist = Infinity;
-                            for (const d of validMoves) {
-                                const nr = row + d.y;
-                                const nc = col + d.x;
-                                const id = _idx(nr, nc);
-                                const dd = (_exitDist && _exitDist[id] >= 0) ? _exitDist[id] : Infinity;
-                                if (dd < bestDist) { bestDist = dd; bestDir = d; }
-                            }
-                            // tie-break: prefer continuing forward, then avoid reversing
-                            const candidates = validMoves.filter(d => {
-                                const nr = row + d.y;
-                                const nc = col + d.x;
-                                const id = _idx(nr, nc);
-                                const dd = (_exitDist && _exitDist[id] >= 0) ? _exitDist[id] : Infinity;
-                                return dd === bestDist;
-                            });
-                            if (candidates.length > 1) {
-                                // prefer current direction if valid
-                                const forward = candidates.find(d => d.x === this.dir.x && d.y === this.dir.y);
-                                if (forward) bestDir = forward;
-                                else {
-                                    const rev2 = {x: -this.dir.x, y: -this.dir.y};
-                                    const nonRev2 = candidates.filter(d => !(d.x === rev2.x && d.y === rev2.y));
-                                    if (nonRev2.length > 0) bestDir = nonRev2[0];
-                                    else bestDir = candidates[0];
-                                }
-                            }
-                            this.nextDir = bestDir;
-                        } else if (this.scared || !player) {
-                            // scared: random movement
-                            this.nextDir = choices[Math.floor(Math.random() * choices.length)];
-                        } else {
-                            // Chase using shared shortest-path distance map (wall-aware)
+                        if (this.scared) {
+                            this.dir = choices[Math.floor(Math.random() * choices.length)];
+                        } else if (Math.random() > 0.3 && player) {
+                            // choose best direction that minimizes Manhattan distance to player
                             let bestDir = choices[0];
-                            let bestDist = Infinity;
-                            for (const d of choices) {
-                                const nr = row + d.y;
-                                const nc = col + d.x;
-                                const id = _idx(nr, nc);
-                                const dd = (_playerDist && _playerDist[id] >= 0) ? _playerDist[id] : Infinity;
-                                if (dd < bestDist) { bestDist = dd; bestDir = d; }
-                            }
-
-                            this.nextDir = bestDir;
+                            let minD = 99999;
+                            choices.forEach(d => {
+                                const nextX = this.x + d.x * TILE_SIZE;
+                                const nextY = this.y + d.y * TILE_SIZE;
+                                const distToP = Math.abs(nextX - player.x) + Math.abs(nextY - player.y);
+                                if (distToP < minD) { minD = distToP; bestDir = d; }
+                            });
+                            this.dir = bestDir;
+                        } else {
+                            this.dir = choices[Math.floor(Math.random() * choices.length)];
                         }
                     } else {
                         // No available choices: try reversing first, then any valid move
+                        const rev = {x: -this.dir.x, y: -this.dir.y};
                         if ((this.dir.x !== 0 || this.dir.y !== 0) && this.canMove(rev.x, rev.y)) {
-                            this.nextDir = rev;
+                            this.dir = rev;
                         } else {
                             for (let d of dirs) {
-                                if (this.canMove(d.x, d.y)) { this.nextDir = d; break; }
+                                if (this.canMove(d.x, d.y)) { this.dir = d; break; }
                             }
                         }
                     }
-
-                    // If we've been stuck, force a random valid direction at the center
-                    if (this._stuckFrames > 30 && validMoves.length > 0) {
-                        this.nextDir = validMoves[Math.floor(Math.random() * validMoves.length)];
-                        this._stuckFrames = 0;
-                    }
                 }
 
-                this.move();
+                this.x += this.dir.x * (this.scared ? this.speed * 0.5 : this.speed);
+                this.y += this.dir.y * (this.scared ? this.speed * 0.5 : this.speed);
             }
             draw(ctx) {
                 const r = this.radius;
@@ -853,39 +805,24 @@
             scoreEl.innerText = 0;
             player = new PacBron(10, 15);
             player.nextDir = {x:1, y:0};
-
-            // Build shared exit-distance map once per level
-            buildExitDistanceMap();
-            // Find spawn boxes (runs of tile value 9) and spawn two ghosts in each (3 boxes => 6 ghosts total)
-            // Release order (10s interval): left, middle, right, then left, middle, right
-            const ghostColors = ['#ff0000', '#00ff00', '#0000ff', '#ffb347', '#ff69b4', '#00ffff', '#ff00ff', '#a52a2a', '#8a2be2',];
+            // Find all spawn boxes (tile value 9) and spawn three ghosts in each
+            const ghostColors = ['#ff0000', '#00ff00', '#0000ff', '#ffb347', '#ff69b4', '#00ffff', '#ff00ff', '#a52a2a', '#8a2be2', '#228b22', '#ffd700', '#ff1493'];
             let ghostIndex = 0;
             ghosts = [];
             const MAX_SPAWN_BOXES = 3;
             const GHOST_RELEASE_INTERVAL_MS = 10000;
             outer: for (let r = 0; r < map.length; r++) {
                 for (let c = 0; c < map[0].length; c++) {
-                    if (map[r][c] !== 9) continue;
-
-                    // Treat a contiguous horizontal run of 9s as ONE spawn box
-                    const startC = c;
-                    let endC = c;
-                    while (endC + 1 < map[0].length && map[r][endC + 1] === 9) endC++;
-                    const centerC = Math.floor((startC + endC) / 2);
-
-                    for (let i = 0; i < 2; i++) {
-                        const releaseStep = (i * MAX_SPAWN_BOXES) + ghostIndex; // left->mid->right, then repeat
-                        const releaseDelay = releaseStep * GHOST_RELEASE_INTERVAL_MS;
-                        ghosts.push(new HoopGhost(
-                            centerC, r,
-                            ghostColors[(ghostIndex + i) % ghostColors.length],
-                            releaseDelay
-                        ));
+                    if (map[r][c] === 9) {
+                        for (let i =0; i < 1; i++) {
+                            ghosts.push(new HoopGhost(
+                                c, r,
+                                ghostColors[(ghostIndex + i) % ghostColors.length],
+                                (ghostIndex * 2000) + (i * 500)
+                            ));
+                        }
+                        ghostIndex++;
                     }
-                    ghostIndex++;
-                    c = endC; // skip the rest of this run
-
-                    if (ghostIndex >= MAX_SPAWN_BOXES) break outer;
                 }
             }
             gameActive = true;

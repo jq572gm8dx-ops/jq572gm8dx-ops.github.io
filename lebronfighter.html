@@ -53,7 +53,7 @@
             image-rendering: pixelated;
         }
 
-        #startScreen, #roundScreen, #endScreen, #mainMenu, #campaignMenu, #shopScreen, #levelSelect, #ultimateSelect, #practiceSelect {
+        #startScreen, #roundScreen, #endScreen, #mainMenu, #shopScreen, #levelSelect, #ultimateSelect {
             position: absolute;
             top: 0;
             left: 0;
@@ -417,6 +417,61 @@
             border-radius: 5px;
         }
 
+        .damage-number {
+            position: absolute;
+            font-size: 2rem;
+            color: #ff0000;
+            font-weight: bold;
+            text-shadow: 2px 2px #000;
+            pointer-events: none;
+            z-index: 7;
+            animation: damageFloat 1s ease-out forwards;
+        }
+
+        @keyframes damageFloat {
+            0% { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% { 
+                opacity: 0;
+                transform: translateY(-50px) scale(1.5);
+            }
+        }
+
+        .practice-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 700px;
+            margin: 20px auto;
+        }
+
+        .practice-option {
+            background: rgba(85, 37, 131, 0.3);
+            border: 3px solid #fdb927;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .practice-option:hover {
+            background: rgba(85, 37, 131, 0.5);
+            transform: scale(1.05);
+        }
+
+        .practice-option h3 {
+            color: #fdb927;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .practice-option p {
+            font-size: 0.7rem;
+            line-height: 1.5;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 1.5rem; }
             .title-small { font-size: 1.2rem; }
@@ -483,6 +538,7 @@
             <p style="margin-bottom: 30px; font-size: 0.9rem;">GOAT EDITION</p>
             
             <button id="startCampaignButton">CAMPAIGN MODE</button>
+            <button id="startPracticeButton">PRACTICE MODE</button>
             <button id="start2PButtonMain">2 PLAYER VS</button>
             <button onclick="window.location.href='lebronfighter-info.html'" style="background: #333; border-color: #666;">GAME INFO</button>
             <button onclick="window.location.href='index.html'" style="background: #333; border-color: #666;">BACK TO HOME</button>
@@ -562,6 +618,33 @@
             
             <button id="continueToLevelSelect" style="margin-top: 20px;">CONTINUE TO LEVEL SELECT</button>
             <button id="backFromUltimateSelect" style="background: #333; border-color: #666; margin-top: 10px;">BACK TO MENU</button>
+        </div>
+
+        <!-- Practice Select -->
+        <div id="practiceSelect" class="hidden">
+            <h1 class="title-small">PRACTICE MODE</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">TRAIN YOUR SKILLS WITH DUMMIES</p>
+            
+            <div class="practice-options">
+                <div class="practice-option" data-dummy-type="still">
+                    <h3>🎯 STILL DUMMY</h3>
+                    <p>Perfect for practicing combos and testing damage</p>
+                    <p style="margin-top: 10px;">• Doesn't move or attack</p>
+                    <p>• Infinite health</p>
+                    <p>• See damage numbers</p>
+                    <button style="margin-top: 15px;">SELECT</button>
+                </div>
+                <div class="practice-option" data-dummy-type="fighting">
+                    <h3>⚔️ TRAINING DUMMY</h3>
+                    <p>Practice against a weak, predictable opponent</p>
+                    <p style="margin-top: 10px;">• Fights back weakly</p>
+                    <p>• Slow reactions</p>
+                    <p>• Low damage output</p>
+                    <button style="margin-top: 15px;">SELECT</button>
+                </div>
+            </div>
+            
+            <button id="backFromPracticeSelect" style="background: #333; border-color: #666; margin-top: 20px;">BACK TO MENU</button>
         </div>
 
         <!-- Level Select -->
@@ -766,6 +849,9 @@
             <button onclick="window.location.href='index.html'">BACK TO HOME</button>
         </div>
 
+        <!-- Damage Numbers Container -->
+        <div id="damageNumbers"></div>
+
         <!-- Touch Controls -->
         <div id="touchControls">
             <!-- D-Pad -->
@@ -804,6 +890,18 @@
         const DOUBLE_TAP_THRESHOLD = 300;
         const ESTIMATED_GAME_DURATION_MINUTES = 3;
         
+        // Practice mode constants
+        const TRAINING_DUMMY_CONFIG = {
+            reactionTime: 120,
+            aiSpeed: 2,
+            difficulty: 0.3,
+            mediumAttackChance: 0.3,
+            closeAttackChance: 0.2,
+            approachDistance: 250,
+            mediumDistance: 150
+        };
+        const DUMMY_AI_CONFIG = { aiSpeed: TRAINING_DUMMY_CONFIG.aiSpeed, difficulty: TRAINING_DUMMY_CONFIG.difficulty };
+        
         // Level configuration
         const LEVEL_CONFIG = {
             1: { difficulty: 0.5, aiSpeed: 3, aiReactionTime: 60, coinsReward: 50, opponentName: 'Heat LeBron', opponentColor: '#98002e' },
@@ -823,7 +921,7 @@
 
         // Game state
         let gameState = 'mainMenu';
-        let gameMode = null; // '1P' or '2P'
+        let gameMode = null; // '1P', '2P', or 'practice'
         let currentRound = 1;
         let roundTime = ROUND_TIME;
         let roundStartTime = 0;
@@ -835,6 +933,8 @@
         let particles = [];
         let projectiles = [];
         let currentLevel = 1;
+        let dummyType = 'still'; // 'still' or 'fighting'
+        let damageNumbers = [];
         
         // Player data (for shop/upgrades)
         let playerData = {
@@ -856,6 +956,14 @@
         const keys = {};
         document.addEventListener('keydown', (e) => {
             keys[e.code] = true;
+            
+            // ESC to exit practice mode
+            if (e.code === 'Escape' && gameMode === 'practice' && gameState === 'playing') {
+                resetGame();
+                e.preventDefault();
+                return;
+            }
+            
             if (gameState === 'playing') {
                 e.preventDefault();
             }
@@ -866,9 +974,10 @@
 
         // Fighter class
         class Fighter {
-            constructor(isPlayer1, isAI = false) {
+            constructor(isPlayer1, isAI = false, isDummy = false) {
                 this.isPlayer1 = isPlayer1;
                 this.isAI = isAI;
+                this.isDummy = isDummy;
                 this.reset();
             }
             
@@ -911,7 +1020,10 @@
                 this.attackType = null;
                 
                 // Opponent info
-                if (this.isAI && gameMode === '1P') {
+                if (this.isDummy) {
+                    this.opponentName = dummyType === 'still' ? 'Still Dummy' : 'Training Dummy';
+                    this.opponentColor = '#888888';
+                } else if (this.isAI && gameMode === '1P') {
                     const levelConfig = LEVEL_CONFIG[currentLevel];
                     this.opponentName = levelConfig.opponentName;
                     this.opponentColor = levelConfig.opponentColor;
@@ -924,7 +1036,14 @@
                 if (this.isAI) {
                     this.aiTimer = 0;
                     this.aiAction = 'idle';
-                    this.aiReactionTime = LEVEL_CONFIG[currentLevel].aiReactionTime;
+                    if (this.isDummy && dummyType === 'fighting') {
+                        // Weak training dummy settings
+                        this.aiReactionTime = TRAINING_DUMMY_CONFIG.reactionTime;
+                    } else if (gameMode === '1P') {
+                        this.aiReactionTime = LEVEL_CONFIG[currentLevel].aiReactionTime;
+                    } else {
+                        this.aiReactionTime = 60;
+                    }
                 }
             }
             
@@ -939,8 +1058,17 @@
                     return;
                 }
                 
-                // AI control
-                if (this.isAI && gameState === 'playing') {
+                // Dummy behavior
+                if (this.isDummy && gameMode === 'practice') {
+                    if (dummyType === 'still') {
+                        // Still dummy doesn't do anything
+                        this.state = 'idle';
+                        this.velocityX = 0;
+                    } else if (dummyType === 'fighting') {
+                        // Training dummy fights weakly
+                        this.updateAI(opponent);
+                    }
+                } else if (this.isAI && gameState === 'playing') {
                     this.updateAI(opponent);
                 } else if (this.ai && this.ai.decide) {
                     // Handle practice dummy AI
@@ -1044,23 +1172,34 @@
                 if (!opponent) return;
                 
                 this.aiTimer++;
-                const levelConfig = LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1];
+                const levelConfig = this.isDummy ? DUMMY_AI_CONFIG : (LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1]);
                 
                 // Make decisions periodically
                 if (this.aiTimer % this.aiReactionTime === 0) {
                     const distance = Math.abs(this.x - opponent.x);
                     const healthRatio = this.health / this.maxHealth;
                     
-                    // Decide action based on distance and health
-                    if (distance > 200) {
-                        this.aiAction = Math.random() < 0.7 ? 'approach' : 'projectile';
-                    } else if (distance > 100) {
-                        this.aiAction = Math.random() < 0.5 ? 'approach' : 'attack';
-                    } else {
-                        if (healthRatio < 0.3 && Math.random() < 0.4) {
-                            this.aiAction = 'block';
+                    // Training dummy is very predictable and passive
+                    if (this.isDummy && dummyType === 'fighting') {
+                        if (distance > TRAINING_DUMMY_CONFIG.approachDistance) {
+                            this.aiAction = 'approach';
+                        } else if (distance > TRAINING_DUMMY_CONFIG.mediumDistance) {
+                            this.aiAction = Math.random() < TRAINING_DUMMY_CONFIG.mediumAttackChance ? 'attack' : 'idle';
                         } else {
-                            this.aiAction = Math.random() < 0.7 ? 'attack' : 'retreat';
+                            this.aiAction = Math.random() < TRAINING_DUMMY_CONFIG.closeAttackChance ? 'attack' : 'idle';
+                        }
+                    } else {
+                        // Normal AI behavior
+                        if (distance > 200) {
+                            this.aiAction = Math.random() < 0.7 ? 'approach' : 'projectile';
+                        } else if (distance > 100) {
+                            this.aiAction = Math.random() < 0.5 ? 'approach' : 'attack';
+                        } else {
+                            if (healthRatio < 0.3 && Math.random() < 0.4) {
+                                this.aiAction = 'block';
+                            } else {
+                                this.aiAction = Math.random() < 0.7 ? 'attack' : 'retreat';
+                            }
                         }
                     }
                 }
@@ -1202,7 +1341,15 @@
                     }
                 }
                 
-                this.health -= actualDamage;
+                // Show damage number in practice mode
+                if (gameMode === 'practice') {
+                    showDamageNumber(Math.round(actualDamage), this.x + this.width / 2, this.y);
+                }
+                
+                // Dummies don't lose health (infinite health)
+                if (!this.isDummy) {
+                    this.health -= actualDamage;
+                }
                 flashAlpha = 0.3;
                 
                 // Screen shake on heavy hits
@@ -1217,7 +1364,7 @@
                 }
                 this.specialMeter = Math.min(this.maxSpecialMeter, this.specialMeter + damage * 0.5);
                 
-                if (this.health <= 0) {
+                if (this.health <= 0 && !this.isDummy) {
                     this.health = 0;
                     this.state = 'ko';
                     createParticles(this.x + this.width / 2, this.y + this.height / 2, '#fdb927', 30);
@@ -1364,6 +1511,41 @@
                 particles.push(new Particle(x, y, color));
             }
         }
+
+        // Damage number system
+        class DamageNumber {
+            constructor(damage, x, y) {
+                this.damage = damage;
+                this.x = x;
+                this.y = y;
+                this.life = 60; // 1 second at 60fps
+            }
+
+            update() {
+                this.life--;
+                this.y -= 1; // Float upward
+            }
+
+            draw() {
+                const alpha = this.life / 60;
+                const scale = 1 + (1 - alpha) * 0.5;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = '#ff0000';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.font = `bold ${24 * scale}px "Press Start 2P"`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeText(Math.round(this.damage), this.x, this.y);
+                ctx.fillText(Math.round(this.damage), this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        function showDamageNumber(damage, x, y) {
+            damageNumbers.push(new DamageNumber(damage, x, y));
+        }
         
         // Utility functions
         function isTouchDevice() {
@@ -1382,14 +1564,19 @@
             if (gameState !== 'playing') return;
             
             // Update round timer
-            const elapsed = (Date.now() - roundStartTime) / 1000;
-            roundTime = Math.max(0, ROUND_TIME - elapsed);
-            document.getElementById('timer').textContent = Math.ceil(roundTime);
-            
-            // Check time out
-            if (roundTime <= 0 && gameState === 'playing') {
-                endRound();
-                return;
+            if (gameMode !== 'practice') {
+                const elapsed = (Date.now() - roundStartTime) / 1000;
+                roundTime = Math.max(0, ROUND_TIME - elapsed);
+                document.getElementById('timer').textContent = Math.ceil(roundTime);
+                
+                // Check time out
+                if (roundTime <= 0 && gameState === 'playing') {
+                    endRound();
+                    return;
+                }
+            } else {
+                // Practice mode - show infinite time
+                document.getElementById('timer').textContent = '∞';
             }
             
             // Update fighters
@@ -1409,11 +1596,17 @@
                     return p.life > 0;
                 });
                 
+                // Update damage numbers
+                damageNumbers = damageNumbers.filter(d => {
+                    d.update();
+                    return d.life > 0;
+                });
+                
                 // Update special meter displays
                 updateSpecialMeters();
                 
-                // Check for KO
-                if (player1.health <= 0 || player2.health <= 0) {
+                // Check for KO (but not in practice mode)
+                if (gameMode !== 'practice' && (player1.health <= 0 || player2.health <= 0)) {
                     if (gameState === 'playing') {
                         endRound();
                     }
@@ -1536,6 +1729,9 @@
             // Draw particles
             particles.forEach(p => p.draw());
             
+            // Draw damage numbers
+            damageNumbers.forEach(d => d.draw());
+            
             // Draw combo counter
             if (Date.now() - comboTimer < 2000 && comboCounter > 1) {
                 ctx.fillStyle = '#fdb927';
@@ -1625,6 +1821,32 @@
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
+            
+            // Show touch controls on mobile
+            if (isTouchDevice()) {
+                document.getElementById('touchControls').classList.add('active');
+            }
+        }
+
+        function startPracticeGame(dummyTypeSelected) {
+            gameMode = 'practice';
+            dummyType = dummyTypeSelected;
+            gameState = 'playing';
+            currentRound = 1;
+            
+            // Create player and dummy
+            player1 = new Fighter(true, false, false);
+            player2 = new Fighter(false, true, true); // AI-controlled dummy
+            
+            player1.wins = 0;
+            player2.wins = 0;
+            
+            startRound();
+            
+            document.getElementById('practiceSelect').classList.add('hidden');
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('coinsDisplay').classList.add('hidden');
             
             // Show touch controls on mobile
             if (isTouchDevice()) {
@@ -1724,31 +1946,6 @@
         }
         
         function endRound() {
-            // In practice mode, just reset without ending
-            if (isPracticeMode) {
-                roundActive = false;
-                setTimeout(() => {
-                    player1.reset();
-                    player2.reset();
-                    
-                    // Re-apply practice mode settings
-                    if (practiceMode === 'still') {
-                        player2.isTrainingDummy = true;
-                        player2.isStill = true;
-                        player2.name = '🎯 STILL';
-                    } else {
-                        player2.isTrainingDummy = true;
-                        player2.isStill = false;
-                        player2.name = '⚔️ TRAINING';
-                        player2.ai = createWeakAI();
-                    }
-                    
-                    practiceCombo = 0;
-                    roundActive = true;
-                }, 1500);
-                return;
-            }
-            
             gameState = 'roundEnd';
             
             // Determine winner
@@ -1838,11 +2035,13 @@
 
         function resetGame() {
             gameState = 'mainMenu';
+            gameMode = null;
             document.getElementById('endScreen').classList.add('hidden');
             document.getElementById('hud').classList.add('hidden');
             document.getElementById('touchControls').classList.remove('active');
             document.getElementById('coinsDisplay').classList.remove('hidden');
             document.getElementById('mainMenu').classList.remove('hidden');
+            damageNumbers = [];
         }
         
         // Save/Load player data
@@ -1944,8 +2143,14 @@
             document.getElementById('ultimateSelect').classList.add('hidden');
             document.getElementById('shopScreen').classList.add('hidden');
             document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('practiceSelect').classList.add('hidden');
             document.getElementById('coinsDisplay').classList.remove('hidden');
             gameState = 'mainMenu';
+        }
+
+        function showPracticeSelect() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('practiceSelect').classList.remove('hidden');
         }
         
         function showUltimateSelect() {
@@ -1988,7 +2193,9 @@
         }
         
         function updateOpponentLabels() {
-            if (gameMode === '1P' && player2) {
+            if (gameMode === 'practice' && player2) {
+                document.getElementById('player2Label').textContent = (dummyType === 'still' ? 'STILL DUMMY' : 'TRAINING DUMMY');
+            } else if (gameMode === '1P' && player2) {
                 const levelConfig = LEVEL_CONFIG[currentLevel];
                 document.getElementById('player2Label').textContent = levelConfig.opponentName.toUpperCase();
             } else {
@@ -2087,135 +2294,6 @@
             showUltimateSelect();
         });
         
-        // Practice mode
-        let isPracticeMode = false;
-        let practiceMode = null; // 'still' or 'training'
-        let practiceCombo = 0;
-        let practiceTotalDamage = 0;
-        let practiceSessionStats = { maxCombo: 0, totalDamage: 0 };
-        
-        document.getElementById('startPracticeButton').addEventListener('click', () => {
-            document.getElementById('campaignMenu').classList.add('hidden');
-            document.getElementById('practiceSelect').classList.remove('hidden');
-            gameState = 'practiceSelect';
-        });
-
-        document.getElementById('backFromPracticeSelect').addEventListener('click', () => {
-            document.getElementById('practiceSelect').classList.add('hidden');
-            document.getElementById('campaignMenu').classList.remove('hidden');
-            gameState = 'campaignMenu';
-        });
-
-        document.getElementById('stillDummyBtn').addEventListener('click', () => {
-            isPracticeMode = true;
-            practiceMode = 'still';
-            startPracticeMode();
-        });
-
-        document.getElementById('trainingDummyBtn').addEventListener('click', () => {
-            isPracticeMode = true;
-            practiceMode = 'training';
-            startPracticeMode();
-        });
-        
-        function createWeakAI() {
-            return {
-                thinkCounter: 0,
-                thinkInterval: Math.random() * 30 + 40,
-                decide: function() {
-                    this.thinkCounter++;
-                    if (this.thinkCounter < this.thinkInterval) return;
-                    
-                    this.thinkCounter = 0;
-                    const rand = Math.random();
-                    
-                    // Clear previous keys
-                    keys['ArrowLeft'] = false;
-                    keys['ArrowRight'] = false;
-                    keys['ArrowUp'] = false;
-                    keys['ArrowDown'] = false;
-                    keys['KeyJ'] = false;
-                    keys['KeyK'] = false;
-                    keys['KeyL'] = false;
-                    keys['KeyI'] = false;
-                    
-                    if (rand < 0.4) {
-                        // Movement
-                        if (Math.random() > 0.5) {
-                            keys['ArrowLeft'] = true;
-                        } else {
-                            keys['ArrowRight'] = true;
-                        }
-                    } else if (rand < 0.6) {
-                        // Punch
-                        keys['KeyJ'] = true;
-                    } else if (rand < 0.75) {
-                        // Kick
-                        keys['KeyK'] = true;
-                    } else {
-                        // Block
-                        keys['KeyL'] = true;
-                    }
-                }
-            };
-        }
-        
-        function startPracticeMode() {
-            document.getElementById('practiceSelect').classList.add('hidden');
-            document.getElementById('practiceHUD').classList.remove('hidden');
-            document.getElementById('coinsDisplay').classList.add('hidden');
-            gameState = 'playing';
-            
-            practiceCombo = 0;
-            practiceTotalDamage = 0;
-            practiceSessionStats = { maxCombo: 0, totalDamage: 0 };
-            
-            player1.health = player1.maxHealth;
-            player2.health = player2.maxHealth;
-            
-            if (practiceMode === 'still') {
-                player2.isTrainingDummy = true;
-                player2.isStill = true;
-                player2.name = '🎯 STILL';
-            } else {
-                player2.isTrainingDummy = true;
-                player2.isStill = false;
-                player2.name = '⚔️ TRAINING';
-                player2.ai = createWeakAI();
-            }
-            
-            gameMode = 'practice';
-            roundStarted = true;
-            roundActive = true;
-        }
-
-        document.getElementById('exitPracticeBtn').addEventListener('click', () => {
-            isPracticeMode = false;
-            practiceMode = null;
-            gameState = 'mainMenu';
-            document.getElementById('practiceHUD').classList.add('hidden');
-            document.getElementById('mainMenu').classList.remove('hidden');
-            document.getElementById('coinsDisplay').classList.add('hidden');
-            roundActive = false;
-            
-            alert(`✨ PRACTICE SESSION COMPLETE ✨\n\nMax Combo: ${practiceSessionStats.maxCombo}\nTotal Damage: ${practiceTotalDamage}\n\nKeep training to improve!`);
-        });
-        
-        function updatePracticeHUD() {
-            if (!isPracticeMode) return;
-            
-            document.getElementById('comboCount').textContent = practiceCombo;
-            document.getElementById('totalDamage').textContent = practiceTotalDamage;
-            
-            if (practiceSessionStats.maxCombo < practiceCombo) {
-                practiceSessionStats.maxCombo = practiceCombo;
-            }
-            
-            const ultimatePercent = Math.floor((player1.specialMeter / 100) * 5);
-            const bars = '▮'.repeat(ultimatePercent) + '▯'.repeat(5 - ultimatePercent);
-            document.getElementById('ultimateProgress').textContent = `${bars} ULTIMATE: ${Math.floor(player1.specialMeter)}%`;
-        }
-        
         document.getElementById('shopButton').addEventListener('click', () => {
             showShop();
         });
@@ -2272,6 +2350,18 @@
             } else {
                 document.getElementById('mainMenu').classList.remove('hidden');
             }
+        });
+        
+        // Practice mode buttons
+        document.querySelectorAll('.practice-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const selectedDummyType = option.getAttribute('data-dummy-type');
+                startPracticeGame(selectedDummyType);
+            });
+        });
+        
+        document.getElementById('backFromPracticeSelect').addEventListener('click', () => {
+            showMainMenu();
         });
         
         // Ultimate buttons
